@@ -64,3 +64,7 @@ composer analyse
 composer lint
 npm run build
 ```
+
+## Continuous Integration
+
+GitHub Actions runs the Simple Transaction CI workflow after pushes and pull requests to `main` and `develop`. The workflow installs Laravel dependencies, prepares a testing environment, runs the backend test suite, PHPStan analysis, PHP_CodeSniffer linting, and builds the Blade/Vite assets.
