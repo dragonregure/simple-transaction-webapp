@@ -1,0 +1,90 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: simple-transaction-mysql
+    restart: unless-stopped
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: "${MYSQL_DATABASE:-simple_transaction}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-secret}"
+    volumes:
+      - simple_transaction_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    container_name: simple-transaction-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "${PHPMYADMIN_PORT:-8080}:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: "${MYSQL_ROOT_PASSWORD:-secret}"
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: simple-transaction-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend-laravel:/var/www/html
+      - ./docker/backend/xdebug.ini:/usr/local/etc/php/conf.d/99-xdebug.ini:ro
+      - simple_transaction_backend_vendor:/var/www/html/vendor
+      - simple_transaction_backend_bootstrap_cache:/var/www/html/bootstrap/cache
+    environment:
+      APP_NAME: "Simple Transaction"
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: "http://localhost:${BACKEND_PORT:-8000}"
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: "${MYSQL_DATABASE:-simple_transaction}"
+      DB_USERNAME: root
+      DB_PASSWORD: "${MYSQL_ROOT_PASSWORD:-secret}"
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      MAIL_MAILER: log
+      SIMPLE_TRANSACTION_RUN_MIGRATIONS: "${SIMPLE_TRANSACTION_RUN_MIGRATIONS:-true}"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  vite:
+    image: node:24-bookworm-slim
+    container_name: simple-transaction-vite
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
+    volumes:
+      - ./backend-laravel:/app
+      - simple_transaction_vite_node_modules:/app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      VITE_PORT: "${VITE_PORT:-5173}"
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port $${VITE_PORT}"
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  simple_transaction_mysql_data:
+  simple_transaction_backend_vendor:
+  simple_transaction_backend_bootstrap_cache:
+  simple_transaction_vite_node_modules:

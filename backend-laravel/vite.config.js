@@ -3,6 +3,8 @@ import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import tailwindcss from '@tailwindcss/vite';
 
+const vitePort = Number(process.env.VITE_PORT ?? 5173);
+
 export default defineConfig({
     plugins: [
         laravel({
@@ -17,6 +19,14 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
+        host: '0.0.0.0',
+        port: vitePort,
+        strictPort: true,
+        origin: `http://localhost:${vitePort}`,
+        hmr: {
+            host: 'localhost',
+            port: vitePort,
+        },
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },

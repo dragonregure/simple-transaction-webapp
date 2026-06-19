@@ -1,0 +1,10 @@
+.git
+.gitignore
+
+backend-laravel/vendor
+backend-laravel/node_modules
+backend-laravel/.env
+backend-laravel/storage/logs/*.log
+backend-laravel/.phpunit.result.cache
+
+docker-compose.override.yml
