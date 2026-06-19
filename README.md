@@ -1,41 +1,66 @@
 # Simple Transaction Webapp
 
-Laravel application with a Blade/Vite frontend in `backend-laravel`.
+A Laravel application for recording simple financial transactions against a chart of accounts. The application lives in `backend-laravel` and uses Blade with Vite for frontend assets.
 
-## Docker Compose
+## Stack
 
-Start the local container stack from the repository root:
+- Laravel 13
+- PHP 8.3+
+- MySQL 8.4
+- Blade, Vite, and Tailwind CSS
+- Docker Compose for local development
 
-```bash
-docker compose up --build
-```
+## Running With Docker
 
-The compose stack includes:
-
-- `mysql` on `localhost:${MYSQL_PORT:-3306}`
-- `phpmyadmin` on `http://localhost:${PHPMYADMIN_PORT:-8080}`
-- `backend` on `http://localhost:${BACKEND_PORT:-8000}`
-- `vite` on `http://localhost:${VITE_PORT:-5173}`
-
-Default database credentials are:
-
-- Database: `simple_transaction`
-- Username: `root`
-- Password: `secret`
-
-Create a local `.env` from `.env.example` to customize Docker Compose ports, database name, the MySQL root password, or migration behavior.
+From the repository root:
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-The `vite` service runs Laravel Vite in dev mode for Blade styles and scripts. For production-style asset verification, build frontend assets from the Laravel app directory:
+Available services:
+
+- App: `http://localhost:8000`
+- Vite: `http://localhost:5173`
+- phpMyAdmin: `http://localhost:8080`
+- MySQL: `localhost:3306`
+
+Default database credentials:
+
+```text
+Database: simple_transaction
+Username: root
+Password: secret
+```
+
+The backend container runs migrations automatically when `SIMPLE_TRANSACTION_RUN_MIGRATIONS=true`.
+
+The backend image installs Xdebug and loads `docker/backend/xdebug.ini`, so containerized debugging is available during development.
+
+## Local Development
+
+For local development without Docker, configure MySQL first, then run:
 
 ```bash
 cd backend-laravel
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
 npm install
-npm run build
+composer dev
 ```
 
-The backend image installs Xdebug and loads `docker/backend/xdebug.ini`. Migrations run automatically by default through `SIMPLE_TRANSACTION_RUN_MIGRATIONS=true` in `docker-compose.yml`.
+The Laravel `.env.example` defaults to the same MySQL database name and credentials used by Docker.
+
+## Validation
+
+Run checks from `backend-laravel`:
+
+```bash
+composer test
+composer analyse
+composer lint
+npm run build
+```
