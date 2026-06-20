@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ChartOfAccountCategoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -13,5 +14,5 @@ Route::view('/transactions', 'transactions.index')
 Route::view('/master/chart-of-accounts', 'chart-of-accounts.index')
     ->name('chart-of-accounts.index');
 
-Route::view('/master/chart-of-account-categories', 'chart-of-account-categories.index')
+Route::get('/master/chart-of-account-categories', [ChartOfAccountCategoryController::class, 'index'])
     ->name('chart-of-account-categories.index');
