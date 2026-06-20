@@ -6,6 +6,24 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TransactionController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/api/documentation', function () {
+    return response((string) file_get_contents(public_path('docs/index.html')), 200, [
+        'Content-Type' => 'text/html; charset=UTF-8',
+    ]);
+})->name('api.documentation');
+
+Route::get('/api/docs', function () {
+    return response((string) file_get_contents(public_path('docs/openapi.yaml')), 200, [
+        'Content-Type' => 'application/yaml',
+    ]);
+})->name('api.docs');
+
+Route::get('/docs/openapi.yaml', function () {
+    return response((string) file_get_contents(public_path('docs/openapi.yaml')), 200, [
+        'Content-Type' => 'application/yaml',
+    ]);
+})->name('docs.openapi');
+
 Route::get('/', function () {
     return response('', 302)
         ->header('Location', route('transactions.index', [], false));

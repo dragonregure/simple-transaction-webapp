@@ -1,0 +1,295 @@
+openapi: 3.0.3
+info:
+  title: Simple Transaction API
+  version: 1.0.0
+  description: API endpoints used by the Vue SPA for transactions, reports, chart of accounts, and chart of account categories.
+servers:
+  - url: /api/v1
+paths:
+  /transactions:
+    get:
+      summary: List transactions with the Yajra DataTables server-side contract.
+      parameters:
+        - $ref: "#/components/parameters/DataTablesDraw"
+        - $ref: "#/components/parameters/DataTablesStart"
+        - $ref: "#/components/parameters/DataTablesLength"
+        - $ref: "#/components/parameters/DataTablesSearch"
+      responses:
+        "200":
+          description: DataTables response.
+    post:
+      summary: Create a transaction.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionPayload"
+      responses:
+        "201":
+          description: Created transaction.
+  /transactions/{id}:
+    get:
+      summary: Get a transaction.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Transaction detail.
+    put:
+      summary: Update a transaction.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransactionPayload"
+      responses:
+        "200":
+          description: Updated transaction.
+    delete:
+      summary: Delete a transaction.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Deleted.
+  /reports:
+    get:
+      summary: Get monthly category report data.
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+            example: 2026
+      responses:
+        "200":
+          description: Report summary.
+  /reports/export:
+    get:
+      summary: Export the monthly category report as XLSX.
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: integer
+            example: 2026
+      responses:
+        "200":
+          description: XLSX workbook.
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+  /chart-of-accounts:
+    get:
+      summary: List chart of accounts with the Yajra DataTables server-side contract.
+      responses:
+        "200":
+          description: DataTables response.
+    post:
+      summary: Create a chart of account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChartOfAccountPayload"
+      responses:
+        "201":
+          description: Created chart of account.
+  /chart-of-accounts/select-options:
+    get:
+      summary: Search chart of account options for server-side selects.
+      parameters:
+        - $ref: "#/components/parameters/Term"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+      responses:
+        "200":
+          description: Select2-compatible options.
+  /chart-of-accounts/types:
+    get:
+      summary: List account type options.
+      responses:
+        "200":
+          description: Account type options.
+  /chart-of-accounts/{id}:
+    get:
+      summary: Get a chart of account.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Chart of account detail.
+    put:
+      summary: Update a chart of account.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChartOfAccountPayload"
+      responses:
+        "200":
+          description: Updated chart of account.
+    delete:
+      summary: Delete a chart of account.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Deleted.
+        "409":
+          description: Account is used by transactions.
+  /chart-of-account-categories:
+    get:
+      summary: List chart of account categories with the Yajra DataTables server-side contract.
+      responses:
+        "200":
+          description: DataTables response.
+    post:
+      summary: Create a chart of account category.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChartOfAccountCategoryPayload"
+      responses:
+        "201":
+          description: Created category.
+  /chart-of-account-categories/select-options:
+    get:
+      summary: Search category options for server-side selects.
+      parameters:
+        - $ref: "#/components/parameters/Term"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+      responses:
+        "200":
+          description: Select2-compatible options.
+  /chart-of-account-categories/{id}:
+    get:
+      summary: Get a category.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Category detail.
+    put:
+      summary: Update a category.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChartOfAccountCategoryPayload"
+      responses:
+        "200":
+          description: Updated category.
+    delete:
+      summary: Delete a category.
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Deleted.
+        "409":
+          description: Category is used by chart of accounts.
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        oneOf:
+          - type: integer
+          - type: string
+    Term:
+      name: term
+      in: query
+      schema:
+        type: string
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+    PerPage:
+      name: per_page
+      in: query
+      schema:
+        type: integer
+        default: 20
+    DataTablesDraw:
+      name: draw
+      in: query
+      schema:
+        type: integer
+        default: 1
+    DataTablesStart:
+      name: start
+      in: query
+      schema:
+        type: integer
+        default: 0
+    DataTablesLength:
+      name: length
+      in: query
+      schema:
+        type: integer
+        default: 10
+    DataTablesSearch:
+      name: search[value]
+      in: query
+      schema:
+        type: string
+  schemas:
+    TransactionPayload:
+      type: object
+      required: [idempotency_key, transaction_date, chart_of_account_id, amount]
+      properties:
+        idempotency_key:
+          type: string
+          format: uuid
+        transaction_date:
+          type: string
+          format: date
+        chart_of_account_id:
+          type: integer
+        description:
+          type: string
+          nullable: true
+        amount:
+          type: integer
+          minimum: 1
+    ChartOfAccountPayload:
+      type: object
+      required: [code, category_id, account_type, name]
+      properties:
+        code:
+          type: string
+        category_id:
+          type: integer
+        account_type:
+          type: string
+          enum: [income, expense]
+        name:
+          type: string
+    ChartOfAccountCategoryPayload:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
