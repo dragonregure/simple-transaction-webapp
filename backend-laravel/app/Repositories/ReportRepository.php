@@ -9,9 +9,14 @@ use App\Models\Transaction;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 
+/**
+ * Provides transaction reporting data for the Reports page and Excel export.
+ */
 class ReportRepository implements ReportRepositoryInterface
 {
     /**
+     * Get the transaction years available for report filters.
+     *
      * @return array<int, int>
      */
     public function availableYears(): array
@@ -38,6 +43,8 @@ class ReportRepository implements ReportRepositoryInterface
     }
 
     /**
+     * Build the monthly income and expense summary used by reports and exports.
+     *
      * @return array{
      *     year: int,
      *     months: array<int, string>,
@@ -127,6 +134,8 @@ class ReportRepository implements ReportRepositoryInterface
     }
 
     /**
+     * Create the month labels for a selected reporting year.
+     *
      * @return array<int, string>
      */
     private function monthsForYear(int $year): array
@@ -141,6 +150,8 @@ class ReportRepository implements ReportRepositoryInterface
     }
 
     /**
+     * Create an empty monthly amount map for report row totals.
+     *
      * @return array<int, int>
      */
     private function emptyMonthlyAmounts(): array
@@ -149,6 +160,8 @@ class ReportRepository implements ReportRepositoryInterface
     }
 
     /**
+     * Get categories that have accounts available for reporting.
+     *
      * @return Collection<int, ChartOfAccountCategory>
      */
     private function reportCategories(): Collection
@@ -161,6 +174,8 @@ class ReportRepository implements ReportRepositoryInterface
     }
 
     /**
+     * Get transactions within the selected report year.
+     *
      * @return Collection<int, Transaction>
      */
     private function transactionsForYear(int $year): Collection
@@ -175,6 +190,9 @@ class ReportRepository implements ReportRepositoryInterface
             ->get();
     }
 
+    /**
+     * Resolve the signed report amount for an income or expense account.
+     */
     private function transactionAmount(Transaction $transaction, string $type): int
     {
         if ($type === ChartOfAccount::ACCOUNT_TYPE_INCOME) {

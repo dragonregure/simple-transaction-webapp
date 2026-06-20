@@ -19,6 +19,8 @@ class ReportWorkbookExporter
     private const TOTAL_EXPENSE_FILL = 'FFF4B083';
 
     /**
+     * Export the report summary as an XLSX workbook string.
+     *
      * @param array{
      *     year: int,
      *     months: array<int, string>,
@@ -67,6 +69,8 @@ class ReportWorkbookExporter
     }
 
     /**
+     * Write the worksheet title columns and header styling.
+     *
      * @param array{
      *     year: int,
      *     months: array<int, string>,
@@ -106,6 +110,8 @@ class ReportWorkbookExporter
     }
 
     /**
+     * Write a group of report rows and return the next available row number.
+     *
      * @param array<int, array{label: string, amounts: array<int, int>}> $rows
      */
     private function writeRows(Worksheet $sheet, array $rows, int $rowNumber, string $fill): int
@@ -119,6 +125,8 @@ class ReportWorkbookExporter
     }
 
     /**
+     * Write a single labelled amount row to the worksheet.
+     *
      * @param array<int, int> $amounts
      */
     private function writeAmountRow(
