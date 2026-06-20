@@ -3,15 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['chart_of_account_id', 'description', 'debit', 'credit'])]
+#[Fillable(['chart_of_account_id', 'transaction_date', 'description', 'debit', 'credit'])]
 class Transaction extends Model
 {
-    use HasUuids, SoftDeletes;
+    use HasFactory, HasUuids, SoftDeletes;
 
     /**
      * @return BelongsTo<ChartOfAccount, $this>
@@ -29,6 +30,7 @@ class Transaction extends Model
     protected function casts(): array
     {
         return [
+            'transaction_date' => 'date',
             'debit' => 'integer',
             'credit' => 'integer',
         ];
