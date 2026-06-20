@@ -1,6 +1,6 @@
 # Simple Transaction Webapp
 
-A Laravel application for managing simple financial transactions against a chart of accounts. The application lives in `backend-laravel` and uses Laravel Blade with the Vite asset pipeline. There is no separate frontend app(at least for now).
+A Laravel application for managing simple financial transactions against a chart of accounts. The original application lives in `backend-laravel` and uses Laravel Blade with the Vite asset pipeline. A Vue SPA version also lives in `frontend` and consumes the Laravel API.
 
 ## What Is Included
 
@@ -13,12 +13,14 @@ A Laravel application for managing simple financial transactions against a chart
 - XLSX report export using PhpSpreadsheet.
 - Database seeders for starter chart-of-account and transaction data.
 - Feature tests for transactions, master data, and reports.
+- Vue 3 SPA with server-side tables, server-side selects, CRUD flows, and report export for the same transaction app surface.
+- Swagger/OpenAPI documentation for the API.
 
 ## Development Quality Features
 
 This project is set up with repeatable local and CI checks:
 
-- Docker Compose stack for MySQL, phpMyAdmin, Laravel backend, and Laravel Vite assets.
+- Docker Compose stack for MySQL, phpMyAdmin, Laravel backend, Laravel Vite assets, and the Vue SPA.
 - Xdebug installed in the backend image and configured through `docker/backend/xdebug.ini`.
 - GitHub Actions CI in `.github/workflows/ci.yml`.
 - PHPUnit feature test coverage through `composer test`.
@@ -37,8 +39,10 @@ This project is set up with repeatable local and CI checks:
 - PHP 8.3+
 - MySQL 8.4
 - Blade, Vite, Bootstrap 5, AdminLTE 4, and Bootstrap Icons
+- Vue 3, Vue Router, TypeScript, Vite, Tailwind CSS, and Lucide icons for the SPA
 - Yajra Laravel DataTables
 - PhpSpreadsheet
+- L5 Swagger/OpenAPI docs
 - PHPUnit 12
 - Larastan/PHPStan
 - PHP_CodeSniffer
@@ -56,7 +60,9 @@ docker compose up --build
 Available services:
 
 - App: `http://localhost:8000`
-- Vite: `http://localhost:5173`
+- Laravel Blade Vite: `http://localhost:5173`
+- Vue SPA: `http://localhost:5174`
+- API docs: `http://localhost:8000/api/documentation`
 - phpMyAdmin: `http://localhost:8080`
 - MySQL: `localhost:3306`
 
@@ -86,6 +92,15 @@ npm install
 composer dev
 ```
 
+In another terminal, run the Vue SPA:
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
 The Laravel `.env.example` defaults to the same MySQL database name and credentials used by Docker.
 
 `composer dev` starts the Laravel server, queue listener, Laravel Pail logs, and the Vite dev server together.
@@ -99,6 +114,12 @@ composer test
 composer analyse
 composer lint
 composer lint:php:fix
+npm run build
+```
+
+Run the Vue SPA build from `frontend`:
+
+```bash
 npm run build
 ```
 
@@ -131,6 +152,8 @@ backend-laravel/app/       Controllers, models, requests, repositories, services
 backend-laravel/resources/ Blade views and Vite assets
 backend-laravel/routes/    Web and API routes
 backend-laravel/tests/     PHPUnit feature and unit tests
+frontend/                  Vue SPA application
 docker/backend/            Nginx, PHP-FPM, Supervisor, and Xdebug support files
+docker/frontend/           Vue SPA container support
 .github/workflows/         GitHub Actions CI workflow
 ```
