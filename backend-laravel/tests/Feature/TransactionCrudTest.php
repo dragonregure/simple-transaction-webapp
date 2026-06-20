@@ -50,7 +50,7 @@ class TransactionCrudTest extends TestCase
 
         $this->assertDatabaseHas('transactions', [
             'idempotency_key' => 'd8fc3f37-a58f-4a68-b2f2-a03b12cf5695',
-            'transaction_date' => '2026-06-10',
+            'transaction_date' => '2026-06-10 00:00:00',
             'chart_of_account_id' => $account->id,
             'description' => 'Lunch with client',
             'debit' => 125000,
@@ -227,7 +227,7 @@ class TransactionCrudTest extends TestCase
         $this->assertDatabaseHas('transactions', [
             'id' => $transaction->id,
             'idempotency_key' => '801d960b-0bd6-454c-b916-82dedf93fd28',
-            'transaction_date' => '2026-06-12',
+            'transaction_date' => '2026-06-12 00:00:00',
             'chart_of_account_id' => $meal->id,
             'description' => 'Team lunch',
             'debit' => 210000,
