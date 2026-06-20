@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['chart_of_account_id', 'transaction_date', 'description', 'debit', 'credit'])]
+#[Fillable(['idempotency_key', 'chart_of_account_id', 'transaction_date', 'description', 'debit', 'credit'])]
 class Transaction extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;

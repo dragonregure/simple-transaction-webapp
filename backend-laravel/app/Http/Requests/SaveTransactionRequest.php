@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Transaction;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -26,7 +27,15 @@ class SaveTransactionRequest extends FormRequest
      */
     public function rules(): array
     {
+        $transaction = $this->route('transaction');
+
         return [
+            'idempotency_key' => [
+                'required',
+                'uuid',
+                Rule::unique('transactions', 'idempotency_key')
+                    ->ignore($transaction instanceof Transaction ? $transaction->id : null),
+            ],
             'transaction_date' => ['required', 'date'],
             'chart_of_account_id' => [
                 'required',

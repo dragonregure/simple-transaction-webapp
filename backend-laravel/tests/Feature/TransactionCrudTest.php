@@ -25,6 +25,7 @@ class TransactionCrudTest extends TestCase
             ->assertSee('name="description"', false)
             ->assertSee('name="debit"', false)
             ->assertSee('name="credit"', false)
+            ->assertSee('name="idempotency_key"', false)
             ->assertSee((string) $account->id)
             ->assertSee('401 - Gaji Karyawan');
     }
@@ -35,6 +36,7 @@ class TransactionCrudTest extends TestCase
 
         $this->withSession(['_token' => 'test-token'])->post(route('transactions.store'), [
             '_token' => 'test-token',
+            'idempotency_key' => 'd8fc3f37-a58f-4a68-b2f2-a03b12cf5695',
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => $account->id,
             'description' => 'Lunch with client',
@@ -46,6 +48,7 @@ class TransactionCrudTest extends TestCase
             ->assertSessionHas('status', 'Transaction created.');
 
         $this->assertDatabaseHas('transactions', [
+            'idempotency_key' => 'd8fc3f37-a58f-4a68-b2f2-a03b12cf5695',
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => $account->id,
             'description' => 'Lunch with client',
@@ -58,6 +61,7 @@ class TransactionCrudTest extends TestCase
     {
         $this->withSession(['_token' => 'test-token'])->post(route('transactions.store'), [
             '_token' => 'test-token',
+            'idempotency_key' => '1ec2ad80-1b44-4a8d-9367-bc36fe12ecfb',
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => 999,
             'description' => 'Unknown account transaction',
@@ -73,6 +77,7 @@ class TransactionCrudTest extends TestCase
 
         $this->withSession(['_token' => 'test-token'])->post(route('transactions.store'), [
             '_token' => 'test-token',
+            'idempotency_key' => '68bb282e-4525-4795-9f88-f03bc30a41a0',
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => $account->id,
             'description' => 'Fuel refill',
@@ -83,6 +88,7 @@ class TransactionCrudTest extends TestCase
 
         $this->withSession(['_token' => 'test-token'])->post(route('transactions.store'), [
             '_token' => 'test-token',
+            'idempotency_key' => '932bd77c-f062-4901-8174-09636e1e1ba2',
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => $account->id,
             'description' => 'Fuel refill',
@@ -92,11 +98,40 @@ class TransactionCrudTest extends TestCase
             ->assertSessionHasErrors('debit');
     }
 
+    public function test_transaction_create_requires_unique_idempotency_key(): void
+    {
+        $account = $this->createAccount('605', 'Internet');
+        Transaction::query()->create([
+            'idempotency_key' => 'c71821a7-0f4b-4865-89d6-58a242f0ead9',
+            'transaction_date' => '2026-06-09',
+            'chart_of_account_id' => $account->id,
+            'description' => 'Existing subscription',
+            'debit' => 400000,
+            'credit' => 0,
+        ]);
+
+        $this->withSession(['_token' => 'test-token'])->post(route('transactions.store'), [
+            '_token' => 'test-token',
+            'idempotency_key' => 'c71821a7-0f4b-4865-89d6-58a242f0ead9',
+            'transaction_date' => '2026-06-10',
+            'chart_of_account_id' => $account->id,
+            'description' => 'Duplicate subscription',
+            'debit' => 400000,
+            'credit' => 0,
+        ])
+            ->assertSessionHasErrors('idempotency_key');
+
+        $this->assertDatabaseMissing('transactions', [
+            'description' => 'Duplicate subscription',
+        ]);
+    }
+
     public function test_edit_form_renders_existing_transaction_and_account_select(): void
     {
         $salary = $this->createAccount('401', 'Gaji Karyawan');
         $meal = $this->createAccount('604', 'Makan Siang');
         $transaction = Transaction::query()->create([
+            'idempotency_key' => '9e75ae56-3480-4cd2-852f-f7b60bd41d8e',
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => $salary->id,
             'description' => 'Monthly salary',
@@ -110,6 +145,7 @@ class TransactionCrudTest extends TestCase
             ->assertSee(route('transactions.update', $transaction, false), false)
             ->assertSee('2026-06-10')
             ->assertSee('Monthly salary')
+            ->assertSee('9e75ae56-3480-4cd2-852f-f7b60bd41d8e')
             ->assertSee('401 - Gaji Karyawan')
             ->assertSee('604 - Makan Siang')
             ->assertSee('value="' . $salary->id . '"', false)
@@ -121,6 +157,7 @@ class TransactionCrudTest extends TestCase
         $salary = $this->createAccount('401', 'Gaji Karyawan');
         $meal = $this->createAccount('604', 'Makan Siang');
         $transaction = Transaction::query()->create([
+            'idempotency_key' => '801d960b-0bd6-454c-b916-82dedf93fd28',
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => $salary->id,
             'description' => 'Monthly salary',
@@ -130,6 +167,7 @@ class TransactionCrudTest extends TestCase
 
         $this->withSession(['_token' => 'test-token'])->put(route('transactions.update', $transaction), [
             '_token' => 'test-token',
+            'idempotency_key' => '801d960b-0bd6-454c-b916-82dedf93fd28',
             'transaction_date' => '2026-06-12',
             'chart_of_account_id' => $meal->id,
             'description' => 'Team lunch',
@@ -142,11 +180,51 @@ class TransactionCrudTest extends TestCase
 
         $this->assertDatabaseHas('transactions', [
             'id' => $transaction->id,
+            'idempotency_key' => '801d960b-0bd6-454c-b916-82dedf93fd28',
             'transaction_date' => '2026-06-12',
             'chart_of_account_id' => $meal->id,
             'description' => 'Team lunch',
             'debit' => 210000,
             'credit' => 0,
+        ]);
+    }
+
+    public function test_transaction_update_requires_unique_idempotency_key_except_current_transaction(): void
+    {
+        $salary = $this->createAccount('406', 'Bonus');
+        $meal = $this->createAccount('606', 'Meeting Meal');
+        $existingTransaction = Transaction::query()->create([
+            'idempotency_key' => '31e54fc4-1d02-4b66-8bcf-04cb2314325e',
+            'transaction_date' => '2026-06-09',
+            'chart_of_account_id' => $salary->id,
+            'description' => 'Existing bonus',
+            'debit' => 0,
+            'credit' => 1200000,
+        ]);
+        $transaction = Transaction::query()->create([
+            'idempotency_key' => '5d25306a-f1c2-4975-b58f-5f80909c841e',
+            'transaction_date' => '2026-06-10',
+            'chart_of_account_id' => $salary->id,
+            'description' => 'Monthly salary',
+            'debit' => 0,
+            'credit' => 7500000,
+        ]);
+
+        $this->withSession(['_token' => 'test-token'])->put(route('transactions.update', $transaction), [
+            '_token' => 'test-token',
+            'idempotency_key' => $existingTransaction->idempotency_key,
+            'transaction_date' => '2026-06-12',
+            'chart_of_account_id' => $meal->id,
+            'description' => 'Team lunch',
+            'debit' => 210000,
+            'credit' => 0,
+        ])
+            ->assertSessionHasErrors('idempotency_key');
+
+        $this->assertDatabaseHas('transactions', [
+            'id' => $transaction->id,
+            'idempotency_key' => '5d25306a-f1c2-4975-b58f-5f80909c841e',
+            'description' => 'Monthly salary',
         ]);
     }
 

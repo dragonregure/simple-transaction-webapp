@@ -10,8 +10,13 @@
             @if ($formMethod !== 'POST')
                 @method($formMethod)
             @endif
+            <input type="hidden" name="idempotency_key" value="{{ old('idempotency_key', $idempotencyKey) }}">
 
             <div class="card-body">
+                @error('transaction')
+                    <div class="alert alert-danger" role="alert">{{ $message }}</div>
+                @enderror
+
                 <div class="mb-3">
                     <label for="transaction_date" class="form-label">Date</label>
                     <input

@@ -7,7 +7,11 @@ use App\Models\ChartOfAccount;
 use App\Models\Transaction;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Throwable;
 
 class TransactionController extends Controller
 {
@@ -59,14 +63,25 @@ class TransactionController extends Controller
             'accounts' => $this->accountOptions(),
             'formAction' => route('transactions.store', [], false),
             'formMethod' => 'POST',
+            'idempotencyKey' => (string) Str::uuid(),
             'submitLabel' => 'Create',
             'title' => 'Create Transaction',
         ]);
     }
 
-    public function store(SaveTransactionRequest $request): Response
+    public function store(SaveTransactionRequest $request): Response|RedirectResponse
     {
-        Transaction::query()->create($request->validated());
+        $validated = $request->validated();
+
+        try {
+            DB::transaction(static function () use ($validated): void {
+                Transaction::query()->create($validated);
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return $this->redirectBackWithSaveError();
+        }
 
         return $this->redirectToIndexWithStatus('Transaction created.');
     }
@@ -78,14 +93,25 @@ class TransactionController extends Controller
             'accounts' => $this->accountOptions(),
             'formAction' => route('transactions.update', $transaction, false),
             'formMethod' => 'PUT',
+            'idempotencyKey' => $transaction->idempotency_key ?: (string) Str::uuid(),
             'submitLabel' => 'Update',
             'title' => 'Update Transaction',
         ]);
     }
 
-    public function update(SaveTransactionRequest $request, Transaction $transaction): Response
+    public function update(SaveTransactionRequest $request, Transaction $transaction): Response|RedirectResponse
     {
-        $transaction->update($request->validated());
+        $validated = $request->validated();
+
+        try {
+            DB::transaction(static function () use ($transaction, $validated): void {
+                $transaction->update($validated);
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return $this->redirectBackWithSaveError();
+        }
 
         return $this->redirectToIndexWithStatus('Transaction updated.');
     }
@@ -96,6 +122,15 @@ class TransactionController extends Controller
 
         return response('', 302)
             ->header('Location', route('transactions.index', [], false));
+    }
+
+    private function redirectBackWithSaveError(): RedirectResponse
+    {
+        return back()
+            ->withInput()
+            ->withErrors([
+                'transaction' => 'Unable to save transaction. Please try again.',
+            ]);
     }
 
     /**
