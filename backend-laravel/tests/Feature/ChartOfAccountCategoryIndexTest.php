@@ -20,7 +20,10 @@ class ChartOfAccountCategoryIndexTest extends TestCase
             ->assertOk()
             ->assertSee('data-adminlte-data-table', false)
             ->assertSee('class="table table-hover align-middle mb-0"', false)
-            ->assertSee(route('api.v1.chart-of-account-categories.index', [], false));
+            ->assertSee(route('api.v1.chart-of-account-categories.index', [], false))
+            ->assertSee(route('chart-of-account-categories.create', [], false))
+            ->assertSee('data-edit-endpoint-template', false)
+            ->assertSee('data-delete-endpoint-template', false);
     }
 
     /**

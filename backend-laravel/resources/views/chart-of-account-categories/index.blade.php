@@ -4,10 +4,18 @@
 @section('page-title', 'Chart of Account Categories')
 
 @section('content')
+    @if (session('status'))
+        <div class="alert alert-success" role="alert">
+            {{ session('status') }}
+        </div>
+    @endif
+
     <div
         class="card"
         data-adminlte-data-table
         data-endpoint="{{ $dataEndpoint }}"
+        data-edit-endpoint-template="{{ $editEndpointTemplate }}"
+        data-delete-endpoint-template="{{ $deleteEndpointTemplate }}"
         data-initial-sort="name"
         data-initial-direction="asc"
         data-columns='@json($columns)'
@@ -41,6 +49,12 @@
                             <option value="{{ $option }}" @selected($option === 10)>{{ $option }}</option>
                         @endforeach
                     </select>
+                </div>
+
+                <div class="col-12 col-md-auto">
+                    <a href="{{ $createEndpoint }}" class="btn btn-primary">
+                        <span>Create</span>
+                    </a>
                 </div>
             </div>
         </div>

@@ -14,5 +14,6 @@ Route::view('/transactions', 'transactions.index')
 Route::view('/master/chart-of-accounts', 'chart-of-accounts.index')
     ->name('chart-of-accounts.index');
 
-Route::get('/master/chart-of-account-categories', [ChartOfAccountCategoryController::class, 'index'])
-    ->name('chart-of-account-categories.index');
+Route::resource('/master/chart-of-account-categories', ChartOfAccountCategoryController::class)
+    ->only(['index', 'create', 'store', 'edit', 'update'])
+    ->parameters(['chart-of-account-categories' => 'chartOfAccountCategory']);

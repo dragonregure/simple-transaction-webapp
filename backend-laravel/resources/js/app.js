@@ -31,6 +31,8 @@ const initialiseAdminLteDataTables = () => {
 
 const bindAdminLteDataTable = (dataTable) => {
     const endpoint = dataTable.dataset.endpoint;
+    const editEndpointTemplate = dataTable.dataset.editEndpointTemplate;
+    const deleteEndpointTemplate = dataTable.dataset.deleteEndpointTemplate;
     const searchInput = dataTable.querySelector('[data-adminlte-table-search]');
     const perPageSelect = dataTable.querySelector('[data-adminlte-table-per-page]');
     const filterFields = dataTable.querySelectorAll('[data-adminlte-table-filter]');
@@ -50,6 +52,7 @@ const bindAdminLteDataTable = (dataTable) => {
     const rowLabelKey = dataTable.dataset.rowLabelKey || 'name';
     const emptyMessage = dataTable.dataset.emptyMessage || 'No records found.';
     const errorMessage = dataTable.dataset.errorMessage || 'Unable to load records.';
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const browserParams = new URLSearchParams(window.location.search);
     const state = {
         page: Number(browserParams.get('page') || 1),
@@ -103,6 +106,14 @@ const bindAdminLteDataTable = (dataTable) => {
             hour: '2-digit',
             minute: '2-digit',
         }).format(new Date(value));
+    };
+
+    const endpointFromTemplate = (template, id) => {
+        if (! template || ! id) {
+            return '';
+        }
+
+        return template.replace('__ID__', encodeURIComponent(id));
     };
 
     const queryString = () => {
@@ -159,15 +170,23 @@ const bindAdminLteDataTable = (dataTable) => {
 
         if (column.type === 'actions') {
             const rowLabel = escapeHtml(row[rowLabelKey] || 'record');
+            const editEndpoint = escapeHtml(endpointFromTemplate(editEndpointTemplate, row.id));
+            const deleteEndpoint = escapeHtml(endpointFromTemplate(deleteEndpointTemplate, row.id));
 
             return `
                 <td${className}>
                     <div class="btn-group btn-group-sm" role="group" aria-label="Actions for ${rowLabel}">
-                        <button type="button" class="btn btn-outline-primary" title="Update ${rowLabel}">
+                        <a href="${editEndpoint}" class="btn btn-outline-primary" title="Update ${rowLabel}">
                             <i class="bi bi-pencil-square" aria-hidden="true"></i>
                             <span class="visually-hidden">Update ${rowLabel}</span>
-                        </button>
-                        <button type="button" class="btn btn-outline-danger" title="Delete ${rowLabel}">
+                        </a>
+                        <button
+                            type="button"
+                            class="btn btn-outline-danger"
+                            title="Delete ${rowLabel}"
+                            data-adminlte-table-delete="${deleteEndpoint}"
+                            data-delete-row-label="${rowLabel}"
+                        >
                             <i class="bi bi-trash" aria-hidden="true"></i>
                             <span class="visually-hidden">Delete ${rowLabel}</span>
                         </button>
@@ -348,6 +367,56 @@ const bindAdminLteDataTable = (dataTable) => {
 
         state.page = Number(button.dataset.adminlteTablePage || 1);
         loadTable();
+    });
+
+    tableBody.addEventListener('click', async (event) => {
+        const deleteButton = event.target.closest('[data-adminlte-table-delete]');
+
+        if (! deleteButton || deleteButton.disabled) {
+            return;
+        }
+
+        const deleteEndpoint = deleteButton.dataset.adminlteTableDelete;
+        const rowLabel = deleteButton.dataset.deleteRowLabel || 'this record';
+
+        if (! deleteEndpoint || ! window.confirm(`Delete ${rowLabel}?`)) {
+            return;
+        }
+
+        deleteButton.disabled = true;
+        dataTable.classList.add('is-loading');
+        setStatus(`Deleting ${rowLabel}`);
+
+        try {
+            const response = await fetch(deleteEndpoint, {
+                method: 'DELETE',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
+
+            if (! response.ok) {
+                let message = 'Unable to delete record.';
+
+                if (response.headers.get('content-type')?.includes('application/json')) {
+                    const payload = await response.json();
+                    message = payload.message || message;
+                }
+
+                throw new Error(message);
+            }
+
+            setStatus(`${rowLabel} deleted`);
+            loadTable();
+        } catch (error) {
+            window.alert(error.message || 'Unable to delete record.');
+            setStatus('Unable to delete record');
+        } finally {
+            deleteButton.disabled = false;
+            dataTable.classList.remove('is-loading');
+        }
     });
 
     loadTable();
