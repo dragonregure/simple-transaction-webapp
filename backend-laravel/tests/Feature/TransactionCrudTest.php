@@ -12,7 +12,7 @@ class TransactionCrudTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_create_form_renders_chart_of_account_select(): void
+    public function test_create_form_renders_server_side_chart_of_account_select(): void
     {
         $account = $this->createAccount('401', 'Gaji Karyawan');
 
@@ -20,6 +20,7 @@ class TransactionCrudTest extends TestCase
             ->assertOk()
             ->assertSee('Create Transaction')
             ->assertSee(route('transactions.store', [], false), false)
+            ->assertSee(route('api.v1.chart-of-accounts.select-options', [], false), false)
             ->assertSee('name="transaction_date"', false)
             ->assertSee('name="chart_of_account_id"', false)
             ->assertSee('name="description"', false)
@@ -27,8 +28,8 @@ class TransactionCrudTest extends TestCase
             ->assertDontSee('name="debit"', false)
             ->assertDontSee('name="credit"', false)
             ->assertSee('name="idempotency_key"', false)
-            ->assertSee((string) $account->id)
-            ->assertSee('401 - Gaji Karyawan');
+            ->assertDontSee('value="' . $account->id . '"', false)
+            ->assertDontSee('401 - Gaji Karyawan');
     }
 
     public function test_transaction_can_be_created(): void
@@ -143,7 +144,7 @@ class TransactionCrudTest extends TestCase
         ]);
     }
 
-    public function test_edit_form_renders_existing_transaction_and_account_select(): void
+    public function test_edit_form_renders_existing_transaction_and_selected_account(): void
     {
         $salary = $this->createAccount('401', 'Gaji Karyawan');
         $meal = $this->createAccount('604', 'Makan Siang');
@@ -160,15 +161,42 @@ class TransactionCrudTest extends TestCase
             ->assertOk()
             ->assertSee('Update Transaction')
             ->assertSee(route('transactions.update', $transaction, false), false)
+            ->assertSee(route('api.v1.chart-of-accounts.select-options', [], false), false)
             ->assertSee('2026-06-10')
             ->assertSee('Monthly salary')
             ->assertSee('9e75ae56-3480-4cd2-852f-f7b60bd41d8e')
             ->assertSee('401 - Gaji Karyawan')
-            ->assertSee('604 - Makan Siang')
             ->assertSee('name="amount"', false)
             ->assertSee('value="7500000"', false)
             ->assertSee('value="' . $salary->id . '"', false)
-            ->assertSee('value="' . $meal->id . '"', false);
+            ->assertDontSee('value="' . $meal->id . '"', false)
+            ->assertDontSee('604 - Makan Siang');
+    }
+
+    public function test_chart_of_account_select_options_are_searchable_and_paginated(): void
+    {
+        $this->createAccount('401', 'Gaji Karyawan');
+        $this->createAccount('604', 'Makan Siang');
+
+        foreach (range(1, 21) as $number) {
+            $this->createAccount(sprintf('7%02d', $number), sprintf('Bulk Account %02d', $number));
+        }
+
+        $this->getJson(route('api.v1.chart-of-accounts.select-options', [
+            'term' => 'Mak',
+        ]))
+            ->assertOk()
+            ->assertJsonCount(1, 'results')
+            ->assertJsonPath('results.0.text', '604 - Makan Siang')
+            ->assertJsonPath('pagination.more', false);
+
+        $this->getJson(route('api.v1.chart-of-accounts.select-options', [
+            'q' => '7',
+            'per_page' => 20,
+        ]))
+            ->assertOk()
+            ->assertJsonCount(20, 'results')
+            ->assertJsonPath('pagination.more', true);
     }
 
     public function test_transaction_can_be_updated(): void

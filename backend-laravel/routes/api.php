@@ -13,11 +13,17 @@ Route::prefix('v1')->name('api.v1.')->group(function (): void {
 
     Route::get('/chart-of-accounts', [ChartOfAccountController::class, 'index'])
         ->name('chart-of-accounts.index');
+    Route::get('/chart-of-accounts/select-options', [ChartOfAccountController::class, 'selectOptions'])
+        ->name('chart-of-accounts.select-options');
     Route::delete('/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'destroy'])
         ->name('chart-of-accounts.destroy');
 
     Route::get('/chart-of-account-categories', [ChartOfAccountCategoryController::class, 'index'])
         ->name('chart-of-account-categories.index');
+    Route::get(
+        '/chart-of-account-categories/select-options',
+        [ChartOfAccountCategoryController::class, 'selectOptions']
+    )->name('chart-of-account-categories.select-options');
     Route::delete('/chart-of-account-categories/{chartOfAccountCategory}', [ChartOfAccountCategoryController::class, 'destroy'])
         ->name('chart-of-account-categories.destroy');
 });

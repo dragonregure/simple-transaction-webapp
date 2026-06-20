@@ -6,7 +6,6 @@ use App\Http\Requests\SaveTransactionRequest;
 use App\Models\ChartOfAccount;
 use App\Models\Transaction;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -58,10 +57,11 @@ class TransactionController extends Controller
             'transaction' => new Transaction([
                 'transaction_date' => now()->toDateString(),
             ]),
-            'accounts' => $this->accountOptions(),
+            'accountSelectEndpoint' => route('api.v1.chart-of-accounts.select-options', [], false),
             'formAction' => route('transactions.store', [], false),
             'formMethod' => 'POST',
             'idempotencyKey' => (string) Str::uuid(),
+            'selectedAccount' => $this->selectedAccountOption(new Transaction()),
             'submitLabel' => 'Create',
             'title' => 'Create Transaction',
         ]);
@@ -88,10 +88,11 @@ class TransactionController extends Controller
     {
         return view('transactions.form', [
             'transaction' => $transaction,
-            'accounts' => $this->accountOptions(),
+            'accountSelectEndpoint' => route('api.v1.chart-of-accounts.select-options', [], false),
             'formAction' => route('transactions.update', $transaction, false),
             'formMethod' => 'PUT',
             'idempotencyKey' => $transaction->idempotency_key ?: (string) Str::uuid(),
+            'selectedAccount' => $this->selectedAccountOption($transaction),
             'submitLabel' => 'Update',
             'title' => 'Update Transaction',
         ]);
@@ -131,13 +132,14 @@ class TransactionController extends Controller
             ]);
     }
 
-    /**
-     * @return Collection<int, ChartOfAccount>
-     */
-    private function accountOptions(): Collection
+    private function selectedAccountOption(Transaction $transaction): ?ChartOfAccount
     {
-        return ChartOfAccount::query()
-            ->orderBy('code')
-            ->get(['id', 'code', 'name', 'account_type']);
+        $selectedAccountId = old('chart_of_account_id', $transaction->chart_of_account_id);
+
+        if (! is_numeric($selectedAccountId)) {
+            return null;
+        }
+
+        return ChartOfAccount::query()->find((int) $selectedAccountId, ['id', 'code', 'name']);
     }
 }

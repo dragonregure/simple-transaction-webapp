@@ -51,17 +51,20 @@
                         id="category_id"
                         name="category_id"
                         class="form-select @error('category_id') is-invalid @enderror"
+                        data-server-side-select
+                        data-endpoint="{{ $categorySelectEndpoint }}"
+                        data-placeholder="Select category"
                         required
                     >
                         <option value="">Select category</option>
-                        @foreach ($categories as $category)
+                        @if ($selectedCategory)
                             <option
-                                value="{{ $category->id }}"
-                                @selected((string) old('category_id', $account->category_id) === (string) $category->id)
+                                value="{{ $selectedCategory->id }}"
+                                selected
                             >
-                                {{ $category->name }}
+                                {{ $selectedCategory->name }}
                             </option>
-                        @endforeach
+                        @endif
                     </select>
                     @error('category_id')
                         <div class="invalid-feedback">{{ $message }}</div>

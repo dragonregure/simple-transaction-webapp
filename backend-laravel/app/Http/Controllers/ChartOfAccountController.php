@@ -6,7 +6,6 @@ use App\Http\Requests\SaveChartOfAccountRequest;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountCategory;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
 
 class ChartOfAccountController extends Controller
@@ -41,9 +40,10 @@ class ChartOfAccountController extends Controller
         return view('chart-of-accounts.form', [
             'account' => new ChartOfAccount(),
             'accountTypes' => ChartOfAccount::ACCOUNT_TYPE_LABELS,
-            'categories' => $this->categoryOptions(),
+            'categorySelectEndpoint' => route('api.v1.chart-of-account-categories.select-options', [], false),
             'formAction' => route('chart-of-accounts.store', [], false),
             'formMethod' => 'POST',
+            'selectedCategory' => $this->selectedCategoryOption(new ChartOfAccount()),
             'submitLabel' => 'Create',
             'title' => 'Create Chart of Account',
         ]);
@@ -61,9 +61,10 @@ class ChartOfAccountController extends Controller
         return view('chart-of-accounts.form', [
             'account' => $chartOfAccount,
             'accountTypes' => ChartOfAccount::ACCOUNT_TYPE_LABELS,
-            'categories' => $this->categoryOptions(),
+            'categorySelectEndpoint' => route('api.v1.chart-of-account-categories.select-options', [], false),
             'formAction' => route('chart-of-accounts.update', $chartOfAccount, false),
             'formMethod' => 'PUT',
+            'selectedCategory' => $this->selectedCategoryOption($chartOfAccount),
             'submitLabel' => 'Update',
             'title' => 'Update Chart of Account',
         ]);
@@ -84,13 +85,14 @@ class ChartOfAccountController extends Controller
             ->header('Location', route('chart-of-accounts.index', [], false));
     }
 
-    /**
-     * @return Collection<int, ChartOfAccountCategory>
-     */
-    private function categoryOptions(): Collection
+    private function selectedCategoryOption(ChartOfAccount $account): ?ChartOfAccountCategory
     {
-        return ChartOfAccountCategory::query()
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $selectedCategoryId = old('category_id', $account->category_id);
+
+        if (! is_numeric($selectedCategoryId)) {
+            return null;
+        }
+
+        return ChartOfAccountCategory::query()->find((int) $selectedCategoryId, ['id', 'name']);
     }
 }

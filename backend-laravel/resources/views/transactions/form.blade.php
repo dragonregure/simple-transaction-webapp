@@ -43,17 +43,20 @@
                         id="chart_of_account_id"
                         name="chart_of_account_id"
                         class="form-select @error('chart_of_account_id') is-invalid @enderror"
+                        data-server-side-select
+                        data-endpoint="{{ $accountSelectEndpoint }}"
+                        data-placeholder="Select chart of account"
                         required
                     >
                         <option value="">Select chart of account</option>
-                        @foreach ($accounts as $account)
+                        @if ($selectedAccount)
                             <option
-                                value="{{ $account->id }}"
-                                @selected((string) old('chart_of_account_id', $transaction->chart_of_account_id) === (string) $account->id)
+                                value="{{ $selectedAccount->id }}"
+                                selected
                             >
-                                {{ $account->code }} - {{ $account->name }}
+                                {{ $selectedAccount->code }} - {{ $selectedAccount->name }}
                             </option>
-                        @endforeach
+                        @endif
                     </select>
                     @error('chart_of_account_id')
                         <div class="invalid-feedback">{{ $message }}</div>

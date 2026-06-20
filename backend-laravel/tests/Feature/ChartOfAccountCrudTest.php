@@ -12,7 +12,7 @@ class ChartOfAccountCrudTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_create_form_renders_category_select(): void
+    public function test_create_form_renders_server_side_category_select(): void
     {
         $category = ChartOfAccountCategory::query()->create(['name' => 'Salary']);
 
@@ -20,14 +20,15 @@ class ChartOfAccountCrudTest extends TestCase
             ->assertOk()
             ->assertSee('Create Chart of Account')
             ->assertSee(route('chart-of-accounts.store', [], false), false)
+            ->assertSee(route('api.v1.chart-of-account-categories.select-options', [], false), false)
             ->assertSee('name="code"', false)
             ->assertSee('name="name"', false)
             ->assertSee('name="category_id"', false)
             ->assertSee('name="account_type"', false)
-            ->assertSee((string) $category->id)
             ->assertSee('Income')
             ->assertSee('Expense')
-            ->assertSee('Salary');
+            ->assertDontSee('value="' . $category->id . '"', false)
+            ->assertDontSee('Salary');
     }
 
     public function test_account_can_be_created(): void
@@ -99,7 +100,7 @@ class ChartOfAccountCrudTest extends TestCase
             ->assertSessionHasErrors('account_type');
     }
 
-    public function test_edit_form_renders_existing_account_and_category_select(): void
+    public function test_edit_form_renders_existing_account_and_selected_category(): void
     {
         $salary = ChartOfAccountCategory::query()->create(['name' => 'Salary']);
         $meal = ChartOfAccountCategory::query()->create(['name' => 'Meal Expense']);
@@ -114,14 +115,40 @@ class ChartOfAccountCrudTest extends TestCase
             ->assertOk()
             ->assertSee('Update Chart of Account')
             ->assertSee(route('chart-of-accounts.update', $account, false), false)
+            ->assertSee(route('api.v1.chart-of-account-categories.select-options', [], false), false)
             ->assertSee('401')
             ->assertSee('Gaji Karyawan')
             ->assertSee('Salary')
-            ->assertSee('Meal Expense')
             ->assertSee('Income')
             ->assertSee('Expense')
             ->assertSee('value="' . $salary->id . '"', false)
-            ->assertSee('value="' . $meal->id . '"', false);
+            ->assertDontSee('value="' . $meal->id . '"', false)
+            ->assertDontSee('Meal Expense');
+    }
+
+    public function test_category_select_options_are_searchable_and_paginated(): void
+    {
+        ChartOfAccountCategory::query()->create(['name' => 'Salary']);
+        ChartOfAccountCategory::query()->create(['name' => 'Meal Expense']);
+
+        foreach (range(1, 21) as $number) {
+            ChartOfAccountCategory::query()->create(['name' => sprintf('Category %02d', $number)]);
+        }
+
+        $this->getJson(route('api.v1.chart-of-account-categories.select-options', [
+            'term' => 'Sa',
+        ]))
+            ->assertOk()
+            ->assertJsonCount(1, 'results')
+            ->assertJsonPath('results.0.text', 'Salary')
+            ->assertJsonPath('pagination.more', false);
+
+        $this->getJson(route('api.v1.chart-of-account-categories.select-options', [
+            'per_page' => 20,
+        ]))
+            ->assertOk()
+            ->assertJsonCount(20, 'results')
+            ->assertJsonPath('pagination.more', true);
     }
 
     public function test_account_can_be_updated(): void

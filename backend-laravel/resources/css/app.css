@@ -1,5 +1,6 @@
 @import 'datatables.net-bs5/css/dataTables.bootstrap5.css';
 @import 'datatables.net-responsive-bs5/css/responsive.bootstrap5.css';
+@import 'select2/dist/css/select2.css';
 
 :root {
     --stw-brand-color: #0f766e;
@@ -34,4 +35,24 @@
 .dt-container .dt-info,
 .dt-container .dt-paging {
     padding-block: 0.25rem;
+}
+
+.select2-container--default .select2-selection--single {
+    border-color: var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    min-height: calc(2.25rem + 2px);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: var(--bs-body-color);
+    line-height: calc(2.25rem + 2px);
+    padding-left: 0.75rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    min-height: calc(2.25rem + 2px);
+}
+
+.form-select.is-invalid + .select2-container--default .select2-selection--single {
+    border-color: var(--bs-form-invalid-border-color);
 }

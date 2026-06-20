@@ -1,8 +1,13 @@
 import DataTable from 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5';
+import $ from 'jquery';
+import select2 from 'select2';
+
+select2($);
 
 document.addEventListener('DOMContentLoaded', () => {
     initialiseYajraDataTables();
+    initialiseServerSideSelects();
     initialiseSidebarScrollbar();
 });
 
@@ -32,6 +37,50 @@ const initialiseYajraDataTables = () => {
 
         dataTable.dataset.yajraDataTableReady = 'true';
         bindYajraDataTable(dataTable);
+    });
+};
+
+const initialiseServerSideSelects = () => {
+    document.querySelectorAll('[data-server-side-select]').forEach((select) => {
+        if (select.dataset.serverSideSelectReady === 'true') {
+            return;
+        }
+
+        select.dataset.serverSideSelectReady = 'true';
+        bindServerSideSelect(select);
+    });
+};
+
+const bindServerSideSelect = (select) => {
+    const endpoint = select.dataset.endpoint;
+
+    if (! endpoint || typeof $.fn.select2 !== 'function') {
+        return;
+    }
+
+    $(select).select2({
+        ajax: {
+            url: endpoint,
+            dataType: 'json',
+            delay: 250,
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            data: (params) => ({
+                term: params.term || '',
+                page: params.page || 1,
+            }),
+            processResults: (payload) => ({
+                results: payload.results || [],
+                pagination: {
+                    more: Boolean(payload.pagination?.more),
+                },
+            }),
+        },
+        placeholder: select.dataset.placeholder || '',
+        minimumInputLength: Number(select.dataset.minimumInputLength || 0),
+        width: '100%',
     });
 };
 
