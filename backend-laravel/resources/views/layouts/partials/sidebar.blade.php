@@ -17,6 +17,11 @@
                     label="Transactions"
                 />
                 <x-admin.nav-item
+                    route="reports.index"
+                    icon="bi bi-file-earmark-spreadsheet"
+                    label="Reports"
+                />
+                <x-admin.nav-item
                     route="chart-of-accounts.index"
                     icon="bi bi-journal-text"
                     label="Master Chart of Accounts"

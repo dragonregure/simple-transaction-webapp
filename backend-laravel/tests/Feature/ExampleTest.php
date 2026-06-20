@@ -26,6 +26,7 @@ class ExampleTest extends TestCase
     {
         $pages = [
             route('transactions.index') => 'Transactions',
+            route('reports.index') => 'Reports',
             route('chart-of-accounts.index') => 'Master Chart of Accounts',
             route('chart-of-account-categories.index') => 'Master Chart of Account Categories',
         ];
