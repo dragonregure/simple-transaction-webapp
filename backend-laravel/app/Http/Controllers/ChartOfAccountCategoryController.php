@@ -13,9 +13,23 @@ class ChartOfAccountCategoryController extends Controller
     {
         return view('chart-of-account-categories.index', [
             'columns' => [
-                ['key' => 'name', 'type' => 'text'],
-                ['key' => 'created_at', 'type' => 'datetime'],
-                ['key' => 'actions', 'type' => 'actions', 'class' => 'text-end'],
+                ['key' => 'name', 'name' => 'name', 'label' => 'Name', 'type' => 'text'],
+                [
+                    'key' => 'created_at',
+                    'name' => 'created_at',
+                    'label' => 'Created At',
+                    'type' => 'datetime',
+                    'searchable' => false,
+                ],
+                [
+                    'key' => 'actions',
+                    'name' => 'actions',
+                    'label' => 'Actions',
+                    'type' => 'actions',
+                    'class' => 'text-end',
+                    'orderable' => false,
+                    'searchable' => false,
+                ],
             ],
             'dataEndpoint' => route('api.v1.chart-of-account-categories.index', [], false),
             'createEndpoint' => route('chart-of-account-categories.create', [], false),
@@ -30,6 +44,7 @@ class ChartOfAccountCategoryController extends Controller
                 false
             ),
             'perPageOptions' => [5, 10, 15, 25, 50],
+            'defaultPerPage' => 10,
         ]);
     }
 

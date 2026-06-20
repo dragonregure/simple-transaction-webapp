@@ -18,24 +18,27 @@ class ChartOfAccountCategoryIndexTest extends TestCase
     {
         $this->get(route('chart-of-account-categories.index'))
             ->assertOk()
-            ->assertSee('data-adminlte-data-table', false)
-            ->assertSee('class="table table-hover align-middle mb-0"', false)
+            ->assertSee('data-yajra-data-table', false)
+            ->assertSee('class="table table-hover align-middle w-100 mb-0"', false)
             ->assertSee(route('api.v1.chart-of-account-categories.index', [], false))
             ->assertSee(route('chart-of-account-categories.create', [], false))
             ->assertSee('data-edit-endpoint-template', false)
-            ->assertSee('data-delete-endpoint-template', false);
+            ->assertSee('data-delete-endpoint-template', false)
+            ->assertSee('data-page-length-options', false);
     }
 
     /**
-     * The API displays seeded chart of account categories.
+     * The API returns Yajra DataTables records for seeded chart of account categories.
      */
     public function test_api_displays_seeded_categories(): void
     {
         $this->seed(ChartOfAccountCategorySeeder::class);
 
-        $this->getJson(route('api.v1.chart-of-account-categories.index'))
+        $this->getJson(route('api.v1.chart-of-account-categories.index', $this->dataTableParameters()))
             ->assertOk()
-            ->assertJsonPath('meta.total', 5)
+            ->assertJsonPath('draw', 1)
+            ->assertJsonPath('recordsTotal', 5)
+            ->assertJsonPath('recordsFiltered', 5)
             ->assertJsonFragment(['name' => 'Salary'])
             ->assertJsonFragment(['name' => 'Other Income'])
             ->assertJsonFragment(['name' => 'Family Expense'])
@@ -51,9 +54,14 @@ class ChartOfAccountCategoryIndexTest extends TestCase
         ChartOfAccountCategory::query()->create(['name' => 'Salary']);
         ChartOfAccountCategory::query()->create(['name' => 'Meal Expense']);
 
-        $this->getJson(route('api.v1.chart-of-account-categories.index', ['search' => 'Salary']))
+        $parameters = $this->dataTableParameters([
+            'search' => ['value' => 'Salary', 'regex' => 'false'],
+        ]);
+
+        $this->getJson(route('api.v1.chart-of-account-categories.index', $parameters))
             ->assertOk()
-            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('recordsTotal', 2)
+            ->assertJsonPath('recordsFiltered', 1)
             ->assertJsonFragment(['name' => 'Salary'])
             ->assertJsonMissing(['name' => 'Meal Expense']);
     }
@@ -66,10 +74,13 @@ class ChartOfAccountCategoryIndexTest extends TestCase
         ChartOfAccountCategory::query()->create(['name' => 'Alpha Category']);
         ChartOfAccountCategory::query()->create(['name' => 'Zulu Category']);
 
-        $this->getJson(route('api.v1.chart-of-account-categories.index', [
-            'sort' => 'name',
-            'direction' => 'desc',
-        ]))
+        $parameters = $this->dataTableParameters([
+            'order' => [
+                ['column' => 0, 'dir' => 'desc'],
+            ],
+        ]);
+
+        $this->getJson(route('api.v1.chart-of-account-categories.index', $parameters))
             ->assertOk()
             ->assertJsonPath('data.0.name', 'Zulu Category')
             ->assertJsonPath('data.1.name', 'Alpha Category');
@@ -84,11 +95,54 @@ class ChartOfAccountCategoryIndexTest extends TestCase
             ChartOfAccountCategory::query()->create(['name' => sprintf('Category %02d', $number)]);
         }
 
-        $this->getJson(route('api.v1.chart-of-account-categories.index', ['per_page' => 5]))
+        $parameters = $this->dataTableParameters(['length' => 5]);
+
+        $this->getJson(route('api.v1.chart-of-account-categories.index', $parameters))
             ->assertOk()
-            ->assertJsonPath('meta.per_page', 5)
-            ->assertJsonPath('meta.total', 12)
+            ->assertJsonPath('recordsTotal', 12)
+            ->assertJsonPath('recordsFiltered', 12)
             ->assertJsonPath('data.0.name', 'Category 01')
+            ->assertJsonCount(5, 'data')
             ->assertJsonMissing(['name' => 'Category 06']);
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function dataTableParameters(array $overrides = []): array
+    {
+        return array_replace_recursive([
+            'draw' => 1,
+            'start' => 0,
+            'length' => 10,
+            'search' => ['value' => '', 'regex' => 'false'],
+            'order' => [
+                ['column' => 0, 'dir' => 'asc'],
+            ],
+            'columns' => [
+                [
+                    'data' => 'name',
+                    'name' => 'name',
+                    'searchable' => 'true',
+                    'orderable' => 'true',
+                    'search' => ['value' => '', 'regex' => 'false'],
+                ],
+                [
+                    'data' => 'created_at',
+                    'name' => 'created_at',
+                    'searchable' => 'false',
+                    'orderable' => 'true',
+                    'search' => ['value' => '', 'regex' => 'false'],
+                ],
+                [
+                    'data' => 'actions',
+                    'name' => 'actions',
+                    'searchable' => 'false',
+                    'orderable' => 'false',
+                    'search' => ['value' => '', 'regex' => 'false'],
+                ],
+            ],
+        ], $overrides);
     }
 }

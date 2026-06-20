@@ -1,3 +1,6 @@
+@import 'datatables.net-bs5/css/dataTables.bootstrap5.css';
+@import 'datatables.net-responsive-bs5/css/responsive.bootstrap5.css';
+
 :root {
     --stw-brand-color: #0f766e;
 }
@@ -6,19 +9,14 @@
     background: var(--stw-brand-color);
 }
 
-[data-adminlte-data-table].is-loading .card-body {
+[data-yajra-data-table].is-loading .card-body {
     opacity: 0.55;
     pointer-events: none;
 }
 
-.data-table-sort-link {
-    align-items: center;
-    color: inherit;
-    display: inline-flex;
-    gap: 0.35rem;
-    text-decoration: none;
-}
-
-.data-table-sort-link:hover {
-    color: var(--stw-brand-color);
+.dt-container .dt-search,
+.dt-container .dt-length,
+.dt-container .dt-info,
+.dt-container .dt-paging {
+    padding-block: 0.25rem;
 }

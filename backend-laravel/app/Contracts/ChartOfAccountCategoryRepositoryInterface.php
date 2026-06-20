@@ -2,10 +2,13 @@
 
 namespace App\Contracts;
 
-use App\Support\DataTables\DataTableQuery;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Models\ChartOfAccountCategory;
+use Illuminate\Database\Eloquent\Builder;
 
 interface ChartOfAccountCategoryRepositoryInterface
 {
-    public function paginate(DataTableQuery $dataTable): LengthAwarePaginator;
+    /**
+     * @return Builder<ChartOfAccountCategory>
+     */
+    public function tableQuery(): Builder;
 }

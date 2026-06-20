@@ -1,6 +1,12 @@
-document.addEventListener('DOMContentLoaded', () => {
-    initialiseAdminLteDataTables();
+import DataTable from 'datatables.net-bs5';
+import 'datatables.net-responsive-bs5';
 
+document.addEventListener('DOMContentLoaded', () => {
+    initialiseYajraDataTables();
+    initialiseSidebarScrollbar();
+});
+
+const initialiseSidebarScrollbar = () => {
     const sidebarWrapper = document.querySelector('.sidebar-wrapper');
     const overlayScrollbars = window.OverlayScrollbarsGlobal?.OverlayScrollbars;
     const shouldUseCustomScrollbar = sidebarWrapper && overlayScrollbars && window.innerWidth > 992;
@@ -16,70 +22,36 @@ document.addEventListener('DOMContentLoaded', () => {
             clickScroll: true,
         },
     });
-});
+};
 
-const initialiseAdminLteDataTables = () => {
-    document.querySelectorAll('[data-adminlte-data-table]').forEach((dataTable) => {
-        if (dataTable.dataset.adminlteDataTableReady === 'true') {
+const initialiseYajraDataTables = () => {
+    document.querySelectorAll('[data-yajra-data-table]').forEach((dataTable) => {
+        if (dataTable.dataset.yajraDataTableReady === 'true') {
             return;
         }
 
-        dataTable.dataset.adminlteDataTableReady = 'true';
-        bindAdminLteDataTable(dataTable);
+        dataTable.dataset.yajraDataTableReady = 'true';
+        bindYajraDataTable(dataTable);
     });
 };
 
-const bindAdminLteDataTable = (dataTable) => {
+const bindYajraDataTable = (dataTable) => {
+    const table = dataTable.querySelector('table');
     const endpoint = dataTable.dataset.endpoint;
-    const editEndpointTemplate = dataTable.dataset.editEndpointTemplate;
-    const deleteEndpointTemplate = dataTable.dataset.deleteEndpointTemplate;
-    const searchInput = dataTable.querySelector('[data-adminlte-table-search]');
-    const perPageSelect = dataTable.querySelector('[data-adminlte-table-per-page]');
-    const filterFields = dataTable.querySelectorAll('[data-adminlte-table-filter]');
-    const sortButtons = dataTable.querySelectorAll('[data-adminlte-table-sort]');
-    const tableBody = dataTable.querySelector('[data-adminlte-table-body]');
-    const pagination = dataTable.querySelector('[data-adminlte-table-pagination]');
-    const summary = dataTable.querySelector('[data-adminlte-table-summary]');
-    const status = dataTable.querySelector('[data-adminlte-table-status]');
-    let debounceTimer = null;
-    let activeRequest = null;
 
-    if (! endpoint || ! tableBody) {
+    if (! table || ! endpoint) {
         return;
     }
 
     const columns = JSON.parse(dataTable.dataset.columns || '[]');
-    const rowLabelKey = dataTable.dataset.rowLabelKey || 'name';
-    const emptyMessage = dataTable.dataset.emptyMessage || 'No records found.';
-    const errorMessage = dataTable.dataset.errorMessage || 'Unable to load records.';
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    const browserParams = new URLSearchParams(window.location.search);
-    const state = {
-        page: Number(browserParams.get('page') || 1),
-        perPage: Number(browserParams.get('per_page') || perPageSelect?.value || 10),
-        search: browserParams.get('search') || '',
-        sort: browserParams.get('sort') || dataTable.dataset.initialSort || 'name',
-        direction: browserParams.get('direction') || dataTable.dataset.initialDirection || 'asc',
-        filters: {},
-    };
-
-    filterFields.forEach((field) => {
-        const filterName = field.dataset.adminlteTableFilter;
-        const browserValue = filterName ? browserParams.get(`filter[${filterName}]`) : null;
-
-        if (filterName) {
-            state.filters[filterName] = browserValue || field.value || '';
-            field.value = state.filters[filterName];
-        }
-    });
-
-    if (searchInput) {
-        searchInput.value = state.search;
-    }
-
-    if (perPageSelect) {
-        perPageSelect.value = String(state.perPage);
-    }
+    const status = dataTable.querySelector('[data-yajra-table-status]');
+    const errorMessage = dataTable.dataset.errorMessage || 'Unable to load records.';
+    const rowLabelKey = dataTable.dataset.rowLabelKey || 'name';
+    const initialSort = dataTable.dataset.initialSort;
+    const initialDirection = dataTable.dataset.initialDirection || 'asc';
+    const pageLength = Number(dataTable.dataset.pageLength || 10);
+    const lengthMenu = JSON.parse(dataTable.dataset.pageLengthOptions || '[10,25,50]');
 
     const setStatus = (message) => {
         if (status) {
@@ -87,337 +59,175 @@ const bindAdminLteDataTable = (dataTable) => {
         }
     };
 
-    const escapeHtml = (value) => String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-
-    const formatDate = (value) => {
-        if (! value) {
-            return '-';
-        }
-
-        return new Intl.DateTimeFormat(undefined, {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        }).format(new Date(value));
-    };
-
-    const endpointFromTemplate = (template, id) => {
-        if (! template || ! id) {
-            return '';
-        }
-
-        return template.replace('__ID__', encodeURIComponent(id));
-    };
-
-    const queryString = () => {
-        const query = new URLSearchParams();
-        query.set('page', String(state.page));
-        query.set('per_page', String(state.perPage));
-
-        if (state.search.trim()) {
-            query.set('search', state.search.trim());
-        }
-
-        if (state.sort) {
-            query.set('sort', state.sort);
-            query.set('direction', state.direction);
-        }
-
-        Object.entries(state.filters).forEach(([key, value]) => {
-            if (value && value !== 'all') {
-                query.set(`filter[${key}]`, value);
-            }
-        });
-
-        return query.toString();
-    };
-
-    const syncBrowserUrl = () => {
-        const query = queryString();
-        const nextUrl = query ? `${window.location.pathname}?${query}` : window.location.pathname;
-        window.history.replaceState({}, '', nextUrl);
-    };
-
-    const renderRows = (rows) => {
-        if (rows.length === 0) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="${columns.length || 1}" class="py-4 text-center text-body-secondary">
-                        ${escapeHtml(emptyMessage)}
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        tableBody.innerHTML = rows.map((category) => `
-            <tr>
-                ${columns.map((column) => renderCell(category, column)).join('')}
-            </tr>
-        `).join('');
-    };
-
-    const renderCell = (row, column) => {
-        const className = column.class ? ` class="${escapeHtml(column.class)}"` : '';
-        const value = row[column.key];
-
-        if (column.type === 'actions') {
-            const rowLabel = escapeHtml(row[rowLabelKey] || 'record');
-            const editEndpoint = escapeHtml(endpointFromTemplate(editEndpointTemplate, row.id));
-            const deleteEndpoint = escapeHtml(endpointFromTemplate(deleteEndpointTemplate, row.id));
-
-            return `
-                <td${className}>
-                    <div class="btn-group btn-group-sm" role="group" aria-label="Actions for ${rowLabel}">
-                        <a href="${editEndpoint}" class="btn btn-outline-primary" title="Update ${rowLabel}">
-                            <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                            <span class="visually-hidden">Update ${rowLabel}</span>
-                        </a>
-                        <button
-                            type="button"
-                            class="btn btn-outline-danger"
-                            title="Delete ${rowLabel}"
-                            data-adminlte-table-delete="${deleteEndpoint}"
-                            data-delete-row-label="${rowLabel}"
-                        >
-                            <i class="bi bi-trash" aria-hidden="true"></i>
-                            <span class="visually-hidden">Delete ${rowLabel}</span>
-                        </button>
-                    </div>
-                </td>
-            `;
-        }
-
-        if (column.type === 'datetime') {
-            return `<td${className}>${escapeHtml(formatDate(value))}</td>`;
-        }
-
-        return `<td${className}>${escapeHtml(value)}</td>`;
-    };
-
-    const renderSummary = (meta) => {
-        if (! summary) {
-            return;
-        }
-
-        if (! meta || meta.total === 0) {
-            summary.textContent = 'Showing 0 results';
-            return;
-        }
-
-        summary.textContent = `Showing ${meta.from} to ${meta.to} of ${meta.total} results`;
-    };
-
-    const pageItem = (label, page, disabled = false, active = false) => `
-        <li class="page-item${disabled ? ' disabled' : ''}${active ? ' active' : ''}">
-            <button type="button" class="page-link" data-adminlte-table-page="${page}" ${disabled ? 'disabled' : ''}>
-                ${label}
-            </button>
-        </li>
-    `;
-
-    const renderPagination = (meta) => {
-        if (! pagination || ! meta) {
-            return;
-        }
-
-        const currentPage = meta.current_page;
-        const lastPage = meta.last_page;
-        const startPage = Math.max(1, currentPage - 2);
-        const endPage = Math.min(lastPage, currentPage + 2);
-        const items = [
-            pageItem('&laquo;', Math.max(1, currentPage - 1), currentPage === 1),
-        ];
-
-        for (let page = startPage; page <= endPage; page += 1) {
-            items.push(pageItem(String(page), page, false, page === currentPage));
-        }
-
-        items.push(pageItem('&raquo;', Math.min(lastPage, currentPage + 1), currentPage === lastPage));
-        pagination.innerHTML = items.join('');
-    };
-
-    const renderSortIcons = () => {
-        sortButtons.forEach((button) => {
-            const sort = button.dataset.adminlteTableSort;
-            const icon = dataTable.querySelector(`[data-adminlte-table-sort-icon="${sort}"]`);
-            const tableHeader = button.closest('th');
-            if (! icon) {
-                return;
-            }
-
-            icon.className = sort === state.sort
-                ? `bi bi-caret-${state.direction === 'asc' ? 'up' : 'down'}-fill`
-                : 'bi bi-arrow-down-up';
-
-            if (tableHeader) {
-                if (sort === state.sort) {
-                    tableHeader.setAttribute('aria-sort', state.direction === 'asc' ? 'ascending' : 'descending');
-                } else {
-                    tableHeader.removeAttribute('aria-sort');
-                }
-            }
-        });
-    };
-
-    const loadTable = async () => {
-        window.clearTimeout(debounceTimer);
-        activeRequest?.abort();
-
-        const requestController = new AbortController();
-        const targetUrl = `${endpoint}?${queryString()}`;
-        activeRequest = requestController;
-        dataTable.classList.add('is-loading');
-        setStatus('Loading categories');
-        renderSortIcons();
-
-        try {
-            const response = await fetch(targetUrl, {
-                headers: {
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                signal: requestController.signal,
-            });
-
-            if (! response.ok) {
-                throw new Error(`Request failed with status ${response.status}`);
-            }
-
-            const payload = await response.json();
-            renderRows(payload.data || []);
-            renderSummary(payload.meta);
-            renderPagination(payload.meta);
-            syncBrowserUrl();
-            setStatus('Categories loaded');
-        } catch (error) {
-            if (error.name !== 'AbortError') {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="${columns.length || 1}" class="py-4 text-center text-danger">
-                            ${escapeHtml(errorMessage)}
-                        </td>
-                    </tr>
-                `;
-                setStatus('Unable to load categories');
-            }
-        } finally {
-            if (activeRequest === requestController) {
-                activeRequest = null;
-                dataTable.classList.remove('is-loading');
-            }
-        }
-    };
-
-    const scheduleSearch = () => {
-        window.clearTimeout(debounceTimer);
-        activeRequest?.abort();
-        state.page = 1;
-        state.search = searchInput?.value || '';
-        debounceTimer = window.setTimeout(() => loadTable(), 1000);
-    };
-
-    searchInput?.addEventListener('input', scheduleSearch);
-
-    perPageSelect?.addEventListener('change', () => {
-        state.page = 1;
-        state.perPage = Number(perPageSelect.value || 10);
-        loadTable();
+    const tableApi = new DataTable(table, {
+        ajax: {
+            url: endpoint,
+            type: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            error: () => {
+                setStatus(errorMessage);
+            },
+        },
+        columns: columns.map((column) => dataTableColumn(column, dataTable, rowLabelKey)),
+        lengthMenu,
+        order: initialOrder(columns, initialSort, initialDirection),
+        pageLength,
+        processing: true,
+        responsive: true,
+        serverSide: true,
     });
 
-    filterFields.forEach((field) => {
-        field.addEventListener('change', () => {
-            const filterName = field.dataset.adminlteTableFilter;
-            if (filterName) {
-                state.filters[filterName] = field.value;
-            }
-
-            state.page = 1;
-            loadTable();
-        });
+    tableApi.on('processing.dt', (_event, _settings, processing) => {
+        dataTable.classList.toggle('is-loading', processing);
+        setStatus(processing ? 'Loading records' : 'Records loaded');
     });
 
-    sortButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-            const sort = button.dataset.adminlteTableSort;
-            if (! sort) {
-                return;
-            }
-
-            state.page = 1;
-            state.direction = state.sort === sort && state.direction === 'asc' ? 'desc' : 'asc';
-            state.sort = sort;
-            loadTable();
-        });
+    table.addEventListener('click', (event) => {
+        handleDeleteClick(event, tableApi, dataTable, csrfToken, setStatus);
     });
-
-    pagination?.addEventListener('click', (event) => {
-        const button = event.target.closest('[data-adminlte-table-page]');
-
-        if (! button || button.disabled) {
-            return;
-        }
-
-        state.page = Number(button.dataset.adminlteTablePage || 1);
-        loadTable();
-    });
-
-    tableBody.addEventListener('click', async (event) => {
-        const deleteButton = event.target.closest('[data-adminlte-table-delete]');
-
-        if (! deleteButton || deleteButton.disabled) {
-            return;
-        }
-
-        const deleteEndpoint = deleteButton.dataset.adminlteTableDelete;
-        const rowLabel = deleteButton.dataset.deleteRowLabel || 'this record';
-
-        if (! deleteEndpoint || ! window.confirm(`Delete ${rowLabel}?`)) {
-            return;
-        }
-
-        deleteButton.disabled = true;
-        dataTable.classList.add('is-loading');
-        setStatus(`Deleting ${rowLabel}`);
-
-        try {
-            const response = await fetch(deleteEndpoint, {
-                method: 'DELETE',
-                headers: {
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-            });
-
-            if (! response.ok) {
-                let message = 'Unable to delete record.';
-
-                if (response.headers.get('content-type')?.includes('application/json')) {
-                    const payload = await response.json();
-                    message = payload.message || message;
-                }
-
-                throw new Error(message);
-            }
-
-            setStatus(`${rowLabel} deleted`);
-            loadTable();
-        } catch (error) {
-            window.alert(error.message || 'Unable to delete record.');
-            setStatus('Unable to delete record');
-        } finally {
-            deleteButton.disabled = false;
-            dataTable.classList.remove('is-loading');
-        }
-    });
-
-    loadTable();
 };
+
+const dataTableColumn = (column, dataTable, rowLabelKey) => ({
+    className: column.class || '',
+    data: column.type === 'actions' ? null : column.key,
+    name: column.name || column.key,
+    orderable: column.orderable !== false && column.type !== 'actions',
+    searchable: column.searchable !== false && column.type !== 'actions',
+    render: (value, type, row) => renderCell(value, type, row, column, dataTable, rowLabelKey),
+});
+
+const initialOrder = (columns, initialSort, initialDirection) => {
+    const columnIndex = columns.findIndex((column) => column.key === initialSort);
+
+    if (columnIndex === -1) {
+        return [];
+    }
+
+    return [[columnIndex, initialDirection === 'desc' ? 'desc' : 'asc']];
+};
+
+const renderCell = (value, type, row, column, dataTable, rowLabelKey) => {
+    if (column.type === 'actions') {
+        return renderActions(row, dataTable, rowLabelKey);
+    }
+
+    if (type !== 'display') {
+        return value ?? '';
+    }
+
+    if (column.type === 'datetime') {
+        return escapeHtml(formatDate(value));
+    }
+
+    return escapeHtml(value);
+};
+
+const renderActions = (row, dataTable, rowLabelKey) => {
+    const rowLabel = escapeHtml(row[rowLabelKey] || 'record');
+    const editEndpoint = escapeHtml(endpointFromTemplate(dataTable.dataset.editEndpointTemplate, row.id));
+    const deleteEndpoint = escapeHtml(endpointFromTemplate(dataTable.dataset.deleteEndpointTemplate, row.id));
+
+    return `
+        <div class="btn-group btn-group-sm" role="group" aria-label="Actions for ${rowLabel}">
+            <a href="${editEndpoint}" class="btn btn-outline-primary" title="Update ${rowLabel}">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                <span class="visually-hidden">Update ${rowLabel}</span>
+            </a>
+            <button
+                type="button"
+                class="btn btn-outline-danger"
+                title="Delete ${rowLabel}"
+                data-yajra-table-delete="${deleteEndpoint}"
+                data-delete-row-label="${rowLabel}"
+            >
+                <i class="bi bi-trash" aria-hidden="true"></i>
+                <span class="visually-hidden">Delete ${rowLabel}</span>
+            </button>
+        </div>
+    `;
+};
+
+const handleDeleteClick = async (event, tableApi, dataTable, csrfToken, setStatus) => {
+    const deleteButton = event.target.closest('[data-yajra-table-delete]');
+
+    if (! deleteButton || deleteButton.disabled) {
+        return;
+    }
+
+    const deleteEndpoint = deleteButton.dataset.yajraTableDelete;
+    const rowLabel = deleteButton.dataset.deleteRowLabel || 'this record';
+
+    if (! deleteEndpoint || ! window.confirm(`Delete ${rowLabel}?`)) {
+        return;
+    }
+
+    deleteButton.disabled = true;
+    dataTable.classList.add('is-loading');
+    setStatus(`Deleting ${rowLabel}`);
+
+    try {
+        const response = await fetch(deleteEndpoint, {
+            method: 'DELETE',
+            headers: {
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        if (! response.ok) {
+            throw new Error(await deleteErrorMessage(response));
+        }
+
+        setStatus(`${rowLabel} deleted`);
+        tableApi.ajax.reload(null, false);
+    } catch (error) {
+        window.alert(error.message || 'Unable to delete record.');
+        setStatus('Unable to delete record');
+    } finally {
+        deleteButton.disabled = false;
+        dataTable.classList.remove('is-loading');
+    }
+};
+
+const deleteErrorMessage = async (response) => {
+    if (response.headers.get('content-type')?.includes('application/json')) {
+        const payload = await response.json();
+
+        return payload.message || 'Unable to delete record.';
+    }
+
+    return 'Unable to delete record.';
+};
+
+const endpointFromTemplate = (template, id) => {
+    if (! template || ! id) {
+        return '';
+    }
+
+    return template.replace('__ID__', encodeURIComponent(id));
+};
+
+const formatDate = (value) => {
+    if (! value) {
+        return '-';
+    }
+
+    return new Intl.DateTimeFormat(undefined, {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    }).format(new Date(value));
+};
+
+const escapeHtml = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');

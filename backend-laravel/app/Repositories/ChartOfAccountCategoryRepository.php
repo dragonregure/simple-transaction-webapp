@@ -4,27 +4,16 @@ namespace App\Repositories;
 
 use App\Contracts\ChartOfAccountCategoryRepositoryInterface;
 use App\Models\ChartOfAccountCategory;
-use App\Support\DataTables\DataTableQuery;
-use App\Support\DataTables\EloquentDataTable;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 
 class ChartOfAccountCategoryRepository implements ChartOfAccountCategoryRepositoryInterface
 {
-    public function paginate(DataTableQuery $dataTable): LengthAwarePaginator
+    /**
+     * @return Builder<ChartOfAccountCategory>
+     */
+    public function tableQuery(): Builder
     {
-        return EloquentDataTable::paginate(
-            ChartOfAccountCategory::query(),
-            $dataTable,
-            ['name'],
-            [],
-            [
-                'id' => 'id',
-                'name' => 'name',
-                'created_at' => 'created_at',
-                'updated_at' => 'updated_at',
-            ],
-            'name',
-            'asc'
-        );
+        return ChartOfAccountCategory::query()
+            ->select(['id', 'name', 'created_at', 'updated_at']);
     }
 }
