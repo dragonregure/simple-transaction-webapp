@@ -9,11 +9,12 @@ RUN apt-get update \
         nginx \
         supervisor \
         libicu-dev \
+        libpng-dev \
         libonig-dev \
         libzip-dev \
         unzip \
         zip \
-    && docker-php-ext-install bcmath intl mbstring opcache pcntl pdo_mysql zip \
+    && docker-php-ext-install bcmath gd intl mbstring opcache pcntl pdo_mysql zip \
     && pecl install xdebug \
     && rm -rf /var/lib/apt/lists/*
 

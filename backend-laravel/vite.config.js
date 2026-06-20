@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
-import tailwindcss from '@tailwindcss/vite';
 
 const vitePort = Number(process.env.VITE_PORT ?? 5173);
+const appUrl = process.env.APP_URL ?? 'http://localhost:8000';
+const viteOrigin = process.env.VITE_DEV_SERVER_URL ?? `http://localhost:${vitePort}`;
 
 export default defineConfig({
     plugins: [
@@ -16,13 +17,15 @@ export default defineConfig({
                 }),
             ],
         }),
-        tailwindcss(),
     ],
     server: {
         host: '0.0.0.0',
         port: vitePort,
         strictPort: true,
-        origin: `http://localhost:${vitePort}`,
+        origin: viteOrigin,
+        cors: {
+            origin: [appUrl, viteOrigin],
+        },
         hmr: {
             host: 'localhost',
             port: vitePort,

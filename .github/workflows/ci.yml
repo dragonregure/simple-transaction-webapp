@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - develop
+      - development
   pull_request:
     branches:
       - main
-      - develop
+      - development
 
 jobs:
   laravel:
@@ -48,6 +48,7 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate --ansi
+          php artisan migrate:fresh --force --seed --no-interaction
 
       - name: Run backend tests
         run: composer test
