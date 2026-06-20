@@ -4,6 +4,10 @@
 @section('page-title', $title)
 
 @section('content')
+    @php
+        $currentAmount = $transaction->exists ? max((int) $transaction->debit, (int) $transaction->credit) : null;
+    @endphp
+
     <div class="card">
         <form action="{{ $formAction }}" method="POST" novalidate>
             @csrf
@@ -70,40 +74,21 @@
                     @enderror
                 </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="debit" class="form-label">Debit</label>
-                        <input
-                            id="debit"
-                            name="debit"
-                            type="number"
-                            value="{{ old('debit', $transaction->debit) }}"
-                            class="form-control @error('debit') is-invalid @enderror"
-                            min="0"
-                            step="1"
-                            required
-                        >
-                        @error('debit')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="credit" class="form-label">Credit</label>
-                        <input
-                            id="credit"
-                            name="credit"
-                            type="number"
-                            value="{{ old('credit', $transaction->credit) }}"
-                            class="form-control @error('credit') is-invalid @enderror"
-                            min="0"
-                            step="1"
-                            required
-                        >
-                        @error('credit')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Amount</label>
+                    <input
+                        id="amount"
+                        name="amount"
+                        type="number"
+                        value="{{ old('amount', $currentAmount) }}"
+                        class="form-control @error('amount') is-invalid @enderror"
+                        min="1"
+                        step="1"
+                        required
+                    >
+                    @error('amount')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 

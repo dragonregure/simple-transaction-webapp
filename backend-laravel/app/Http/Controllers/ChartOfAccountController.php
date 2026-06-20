@@ -17,6 +17,7 @@ class ChartOfAccountController extends Controller
             'columns' => [
                 ['key' => 'code', 'name' => 'code', 'label' => 'Code', 'type' => 'text'],
                 ['key' => 'name', 'name' => 'name', 'label' => 'Name', 'type' => 'text'],
+                ['key' => 'account_type', 'name' => 'account_type', 'label' => 'Type', 'type' => 'text'],
                 ['key' => 'category', 'name' => 'category.name', 'label' => 'Category', 'type' => 'text'],
                 [
                     'key' => 'actions',
@@ -39,6 +40,7 @@ class ChartOfAccountController extends Controller
     {
         return view('chart-of-accounts.form', [
             'account' => new ChartOfAccount(),
+            'accountTypes' => ChartOfAccount::ACCOUNT_TYPE_LABELS,
             'categories' => $this->categoryOptions(),
             'formAction' => route('chart-of-accounts.store', [], false),
             'formMethod' => 'POST',
@@ -58,6 +60,7 @@ class ChartOfAccountController extends Controller
     {
         return view('chart-of-accounts.form', [
             'account' => $chartOfAccount,
+            'accountTypes' => ChartOfAccount::ACCOUNT_TYPE_LABELS,
             'categories' => $this->categoryOptions(),
             'formAction' => route('chart-of-accounts.update', $chartOfAccount, false),
             'formMethod' => 'PUT',

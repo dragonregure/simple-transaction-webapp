@@ -67,6 +67,29 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+
+                <div class="mb-3">
+                    <label for="account_type" class="form-label">Type</label>
+                    <select
+                        id="account_type"
+                        name="account_type"
+                        class="form-select @error('account_type') is-invalid @enderror"
+                        required
+                    >
+                        <option value="">Select type</option>
+                        @foreach ($accountTypes as $value => $label)
+                            <option
+                                value="{{ $value }}"
+                                @selected(old('account_type', $account->account_type) === $value)
+                            >
+                                {{ $label }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('account_type')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
             </div>
 
             <div class="card-footer d-flex flex-column flex-sm-row gap-2 justify-content-sm-end">

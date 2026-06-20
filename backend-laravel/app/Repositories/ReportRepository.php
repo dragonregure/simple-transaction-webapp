@@ -56,27 +56,26 @@ class ReportRepository implements ReportRepositoryInterface
         $categoryIndex = [];
 
         foreach ($this->reportCategories() as $category) {
-            $firstAccount = $category->accounts->first();
+            foreach (ChartOfAccount::ACCOUNT_TYPES as $type) {
+                if (! $category->accounts->contains('account_type', $type)) {
+                    continue;
+                }
 
-            if (! $firstAccount instanceof ChartOfAccount) {
-                continue;
+                $row = [
+                    'label' => $category->name,
+                    'amounts' => $this->emptyMonthlyAmounts(),
+                ];
+
+                if ($type === ChartOfAccount::ACCOUNT_TYPE_INCOME) {
+                    $incomeRows[] = $row;
+                    $categoryIndex[$category->id][$type] = count($incomeRows) - 1;
+
+                    continue;
+                }
+
+                $expenseRows[] = $row;
+                $categoryIndex[$category->id][$type] = count($expenseRows) - 1;
             }
-
-            $type = $this->accountType($firstAccount);
-            $row = [
-                'label' => $category->name,
-                'amounts' => $this->emptyMonthlyAmounts(),
-            ];
-
-            if ($type === 'income') {
-                $incomeRows[] = $row;
-                $categoryIndex[$category->id] = ['type' => $type, 'index' => count($incomeRows) - 1];
-
-                continue;
-            }
-
-            $expenseRows[] = $row;
-            $categoryIndex[$category->id] = ['type' => $type, 'index' => count($expenseRows) - 1];
         }
 
         $totalIncome = $this->emptyMonthlyAmounts();
@@ -89,24 +88,24 @@ class ReportRepository implements ReportRepositoryInterface
                 continue;
             }
 
-            $categoryKey = $categoryIndex[$category->id] ?? null;
+            $type = $account->account_type;
+            $categoryKey = $categoryIndex[$category->id][$type] ?? null;
 
             if ($categoryKey === null) {
                 continue;
             }
 
             $month = (int) CarbonImmutable::parse((string) $transaction->transaction_date)->format('n');
-            $type = $this->accountType($account);
             $amount = $this->transactionAmount($transaction, $type);
 
-            if ($type === 'income') {
-                $incomeRows[$categoryKey['index']]['amounts'][$month] += $amount;
+            if ($type === ChartOfAccount::ACCOUNT_TYPE_INCOME) {
+                $incomeRows[$categoryKey]['amounts'][$month] += $amount;
                 $totalIncome[$month] += $amount;
 
                 continue;
             }
 
-            $expenseRows[$categoryKey['index']]['amounts'][$month] += $amount;
+            $expenseRows[$categoryKey]['amounts'][$month] += $amount;
             $totalExpense[$month] += $amount;
         }
 
@@ -176,14 +175,9 @@ class ReportRepository implements ReportRepositoryInterface
             ->get();
     }
 
-    private function accountType(ChartOfAccount $account): string
-    {
-        return str_starts_with($account->code, '4') ? 'income' : 'expense';
-    }
-
     private function transactionAmount(Transaction $transaction, string $type): int
     {
-        if ($type === 'income') {
+        if ($type === ChartOfAccount::ACCOUNT_TYPE_INCOME) {
             return $transaction->credit - $transaction->debit;
         }
 

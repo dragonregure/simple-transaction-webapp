@@ -42,11 +42,13 @@ class ChartOfAccountIndexTest extends TestCase
             ->assertJsonPath('recordsFiltered', 8)
             ->assertJsonFragment(['code' => '401'])
             ->assertJsonFragment(['name' => 'Gaji Karyawan'])
+            ->assertJsonFragment(['account_type' => 'Income'])
             ->assertJsonFragment(['category' => 'Salary'])
             ->assertJsonFragment(['actions' => $this->actionsForAccount('401')])
             ->assertJsonFragment(['code' => '403'])
             ->assertJsonFragment(['category' => 'Other Income'])
             ->assertJsonFragment(['code' => '605'])
+            ->assertJsonFragment(['account_type' => 'Expense'])
             ->assertJsonFragment(['category' => 'Meal Expense']);
     }
 
@@ -61,11 +63,13 @@ class ChartOfAccountIndexTest extends TestCase
         ChartOfAccount::query()->create([
             'code' => '401',
             'category_id' => $salary->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Karyawan',
         ]);
         ChartOfAccount::query()->create([
             'code' => '604',
             'category_id' => $meal->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_EXPENSE,
             'name' => 'Makan Siang',
         ]);
 
@@ -91,11 +95,13 @@ class ChartOfAccountIndexTest extends TestCase
         ChartOfAccount::query()->create([
             'code' => '999',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_EXPENSE,
             'name' => 'Zulu Account',
         ]);
         ChartOfAccount::query()->create([
             'code' => '111',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Alpha Account',
         ]);
 
@@ -122,17 +128,19 @@ class ChartOfAccountIndexTest extends TestCase
         ChartOfAccount::query()->create([
             'code' => '401',
             'category_id' => $salary->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Karyawan',
         ]);
         ChartOfAccount::query()->create([
             'code' => '601',
             'category_id' => $family->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_EXPENSE,
             'name' => 'Biaya Sekolah',
         ]);
 
         $parameters = $this->dataTableParameters([
             'order' => [
-                ['column' => 2, 'dir' => 'asc'],
+                ['column' => 3, 'dir' => 'asc'],
             ],
         ]);
 
@@ -153,6 +161,7 @@ class ChartOfAccountIndexTest extends TestCase
             ChartOfAccount::query()->create([
                 'code' => sprintf('%03d', $number),
                 'category_id' => $category->id,
+                'account_type' => ChartOfAccount::ACCOUNT_TYPE_EXPENSE,
                 'name' => sprintf('Account %02d', $number),
             ]);
         }
@@ -193,6 +202,13 @@ class ChartOfAccountIndexTest extends TestCase
                 [
                     'data' => 'name',
                     'name' => 'name',
+                    'searchable' => 'true',
+                    'orderable' => 'true',
+                    'search' => ['value' => '', 'regex' => 'false'],
+                ],
+                [
+                    'data' => 'account_type',
+                    'name' => 'account_type',
                     'searchable' => 'true',
                     'orderable' => 'true',
                     'search' => ['value' => '', 'regex' => 'false'],

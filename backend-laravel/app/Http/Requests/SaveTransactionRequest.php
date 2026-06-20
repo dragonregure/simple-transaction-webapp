@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ChartOfAccount;
 use App\Models\Transaction;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
 
 class SaveTransactionRequest extends FormRequest
 {
@@ -17,8 +17,7 @@ class SaveTransactionRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'debit' => $this->normalizeAmount($this->input('debit')),
-            'credit' => $this->normalizeAmount($this->input('credit')),
+            'amount' => $this->normalizeAmount($this->input('amount')),
         ]);
     }
 
@@ -43,24 +42,22 @@ class SaveTransactionRequest extends FormRequest
                 Rule::exists('chart_of_accounts', 'id'),
             ],
             'description' => ['nullable', 'string', 'max:1000'],
-            'debit' => ['required', 'integer', 'min:0'],
-            'credit' => ['required', 'integer', 'min:0'],
+            'amount' => ['required', 'integer', 'min:1'],
         ];
     }
 
-    public function withValidator(Validator $validator): void
+    /**
+     * @return array<string, mixed>
+     */
+    public function transactionAttributes(): array
     {
-        $validator->after(function (Validator $validator): void {
-            $debit = (int) $this->input('debit', 0);
-            $credit = (int) $this->input('credit', 0);
+        $validated = $this->validated();
+        $account = ChartOfAccount::query()->findOrFail($validated['chart_of_account_id']);
+        $amount = (int) $validated['amount'];
 
-            if (($debit > 0 && $credit > 0) || ($debit === 0 && $credit === 0)) {
-                $validator->errors()->add(
-                    'debit',
-                    'Enter either a debit amount or a credit amount, but not both.'
-                );
-            }
-        });
+        unset($validated['amount']);
+
+        return array_merge($validated, $account->transactionAmountsFor($amount));
     }
 
     private function normalizeAmount(mixed $amount): mixed

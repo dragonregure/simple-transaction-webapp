@@ -210,6 +210,9 @@ class TransactionIndexTest extends TestCase
         return ChartOfAccount::query()->create([
             'code' => $code,
             'category_id' => $category->id,
+            'account_type' => str_starts_with($code, '4')
+                ? ChartOfAccount::ACCOUNT_TYPE_INCOME
+                : ChartOfAccount::ACCOUNT_TYPE_EXPENSE,
             'name' => $name,
         ]);
     }

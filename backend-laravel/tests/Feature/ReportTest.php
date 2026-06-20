@@ -84,8 +84,40 @@ class ReportTest extends TestCase
         unlink($temporaryFile);
     }
 
-    private function createAccount(string $code, string $categoryName, string $name): ChartOfAccount
+    public function test_report_uses_account_type_instead_of_code_prefix(): void
     {
+        $income = $this->createAccount(
+            '701',
+            'Other Income',
+            'Nonstandard Income',
+            ChartOfAccount::ACCOUNT_TYPE_INCOME
+        );
+        $expense = $this->createAccount(
+            '499',
+            'Meal Expense',
+            'Nonstandard Expense',
+            ChartOfAccount::ACCOUNT_TYPE_EXPENSE
+        );
+
+        $this->createTransaction($income, '2026-02-10', 0, 1000000);
+        $this->createTransaction($expense, '2026-02-11', 250000, 0);
+
+        $this->get(route('reports.index', ['year' => 2026]))
+            ->assertOk()
+            ->assertSee('Total Income')
+            ->assertSee('1,000,000')
+            ->assertSee('Total Expense')
+            ->assertSee('250,000')
+            ->assertSee('Net Income')
+            ->assertSee('750,000');
+    }
+
+    private function createAccount(
+        string $code,
+        string $categoryName,
+        string $name,
+        ?string $accountType = null
+    ): ChartOfAccount {
         $category = ChartOfAccountCategory::query()->firstOrCreate([
             'name' => $categoryName,
         ]);
@@ -93,6 +125,11 @@ class ReportTest extends TestCase
         return ChartOfAccount::query()->create([
             'code' => $code,
             'category_id' => $category->id,
+            'account_type' => $accountType ?? (
+                str_starts_with($code, '4')
+                    ? ChartOfAccount::ACCOUNT_TYPE_INCOME
+                    : ChartOfAccount::ACCOUNT_TYPE_EXPENSE
+            ),
             'name' => $name,
         ]);
     }

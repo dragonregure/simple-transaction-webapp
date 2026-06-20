@@ -28,13 +28,13 @@ class TransactionSeeder extends Seeder
 
         $accounts = ChartOfAccount::query()
             ->orderBy('code')
-            ->get(['id', 'code', 'name']);
+            ->get(['id', 'code', 'account_type', 'name']);
 
         Transaction::factory()
             ->count($missingTransactionCount)
             ->state(function () use ($accounts): array {
                 $account = $accounts->random();
-                $isIncome = in_array($account->code, ['401', '402', '403'], true);
+                $isIncome = $account->account_type === ChartOfAccount::ACCOUNT_TYPE_INCOME;
                 $amount = fake()->numberBetween(10, $isIncome ? 8000 : 1500) * 1000;
 
                 return [

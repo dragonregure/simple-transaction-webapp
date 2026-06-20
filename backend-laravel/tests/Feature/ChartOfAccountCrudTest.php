@@ -23,7 +23,10 @@ class ChartOfAccountCrudTest extends TestCase
             ->assertSee('name="code"', false)
             ->assertSee('name="name"', false)
             ->assertSee('name="category_id"', false)
+            ->assertSee('name="account_type"', false)
             ->assertSee((string) $category->id)
+            ->assertSee('Income')
+            ->assertSee('Expense')
             ->assertSee('Salary');
     }
 
@@ -35,6 +38,7 @@ class ChartOfAccountCrudTest extends TestCase
             '_token' => 'test-token',
             'code' => '401',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Karyawan',
         ])
             ->assertRedirect(route('chart-of-accounts.index', [], false))
@@ -44,6 +48,7 @@ class ChartOfAccountCrudTest extends TestCase
         $this->assertDatabaseHas('chart_of_accounts', [
             'code' => '401',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Karyawan',
         ]);
     }
@@ -54,6 +59,7 @@ class ChartOfAccountCrudTest extends TestCase
         ChartOfAccount::query()->create([
             'code' => '401',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Karyawan',
         ]);
 
@@ -61,6 +67,7 @@ class ChartOfAccountCrudTest extends TestCase
             '_token' => 'test-token',
             'code' => '401',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Ketua MPR',
         ])
             ->assertSessionHasErrors('code');
@@ -72,9 +79,24 @@ class ChartOfAccountCrudTest extends TestCase
             '_token' => 'test-token',
             'code' => '401',
             'category_id' => 999,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Karyawan',
         ])
             ->assertSessionHasErrors('category_id');
+    }
+
+    public function test_account_create_requires_valid_account_type(): void
+    {
+        $category = ChartOfAccountCategory::query()->create(['name' => 'Salary']);
+
+        $this->withSession(['_token' => 'test-token'])->post(route('chart-of-accounts.store'), [
+            '_token' => 'test-token',
+            'code' => '401',
+            'category_id' => $category->id,
+            'account_type' => 'asset',
+            'name' => 'Gaji Karyawan',
+        ])
+            ->assertSessionHasErrors('account_type');
     }
 
     public function test_edit_form_renders_existing_account_and_category_select(): void
@@ -84,6 +106,7 @@ class ChartOfAccountCrudTest extends TestCase
         $account = ChartOfAccount::query()->create([
             'code' => '401',
             'category_id' => $salary->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Karyawan',
         ]);
 
@@ -95,6 +118,8 @@ class ChartOfAccountCrudTest extends TestCase
             ->assertSee('Gaji Karyawan')
             ->assertSee('Salary')
             ->assertSee('Meal Expense')
+            ->assertSee('Income')
+            ->assertSee('Expense')
             ->assertSee('value="' . $salary->id . '"', false)
             ->assertSee('value="' . $meal->id . '"', false);
     }
@@ -106,6 +131,7 @@ class ChartOfAccountCrudTest extends TestCase
         $account = ChartOfAccount::query()->create([
             'code' => '401',
             'category_id' => $salary->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Karyawan',
         ]);
 
@@ -113,6 +139,7 @@ class ChartOfAccountCrudTest extends TestCase
             '_token' => 'test-token',
             'code' => '604',
             'category_id' => $meal->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_EXPENSE,
             'name' => 'Makan Siang',
         ])
             ->assertRedirect(route('chart-of-accounts.index', [], false))
@@ -123,6 +150,7 @@ class ChartOfAccountCrudTest extends TestCase
             'id' => $account->id,
             'code' => '604',
             'category_id' => $meal->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_EXPENSE,
             'name' => 'Makan Siang',
         ]);
     }
@@ -133,11 +161,13 @@ class ChartOfAccountCrudTest extends TestCase
         ChartOfAccount::query()->create([
             'code' => '401',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Karyawan',
         ]);
         $account = ChartOfAccount::query()->create([
             'code' => '402',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Ketua MPR',
         ]);
 
@@ -145,6 +175,7 @@ class ChartOfAccountCrudTest extends TestCase
             '_token' => 'test-token',
             'code' => '401',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Gaji Ketua MPR',
         ])
             ->assertSessionHasErrors('code');
@@ -156,6 +187,7 @@ class ChartOfAccountCrudTest extends TestCase
         $account = ChartOfAccount::query()->create([
             'code' => '602',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_EXPENSE,
             'name' => 'Bensin',
         ]);
 
@@ -173,6 +205,7 @@ class ChartOfAccountCrudTest extends TestCase
         $account = ChartOfAccount::query()->create([
             'code' => '601',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_EXPENSE,
             'name' => 'Biaya Sekolah',
         ]);
         Transaction::query()->create([

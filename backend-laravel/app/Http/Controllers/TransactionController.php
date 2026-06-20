@@ -57,8 +57,6 @@ class TransactionController extends Controller
         return view('transactions.form', [
             'transaction' => new Transaction([
                 'transaction_date' => now()->toDateString(),
-                'debit' => 0,
-                'credit' => 0,
             ]),
             'accounts' => $this->accountOptions(),
             'formAction' => route('transactions.store', [], false),
@@ -71,11 +69,11 @@ class TransactionController extends Controller
 
     public function store(SaveTransactionRequest $request): Response|RedirectResponse
     {
-        $validated = $request->validated();
+        $attributes = $request->transactionAttributes();
 
         try {
-            DB::transaction(static function () use ($validated): void {
-                Transaction::query()->create($validated);
+            DB::transaction(static function () use ($attributes): void {
+                Transaction::query()->create($attributes);
             });
         } catch (Throwable $exception) {
             report($exception);
@@ -101,11 +99,11 @@ class TransactionController extends Controller
 
     public function update(SaveTransactionRequest $request, Transaction $transaction): Response|RedirectResponse
     {
-        $validated = $request->validated();
+        $attributes = $request->transactionAttributes();
 
         try {
-            DB::transaction(static function () use ($transaction, $validated): void {
-                $transaction->update($validated);
+            DB::transaction(static function () use ($transaction, $attributes): void {
+                $transaction->update($attributes);
             });
         } catch (Throwable $exception) {
             report($exception);
@@ -140,6 +138,6 @@ class TransactionController extends Controller
     {
         return ChartOfAccount::query()
             ->orderBy('code')
-            ->get(['id', 'code', 'name']);
+            ->get(['id', 'code', 'name', 'account_type']);
     }
 }

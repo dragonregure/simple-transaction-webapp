@@ -23,8 +23,9 @@ class TransactionCrudTest extends TestCase
             ->assertSee('name="transaction_date"', false)
             ->assertSee('name="chart_of_account_id"', false)
             ->assertSee('name="description"', false)
-            ->assertSee('name="debit"', false)
-            ->assertSee('name="credit"', false)
+            ->assertSee('name="amount"', false)
+            ->assertDontSee('name="debit"', false)
+            ->assertDontSee('name="credit"', false)
             ->assertSee('name="idempotency_key"', false)
             ->assertSee((string) $account->id)
             ->assertSee('401 - Gaji Karyawan');
@@ -40,8 +41,7 @@ class TransactionCrudTest extends TestCase
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => $account->id,
             'description' => 'Lunch with client',
-            'debit' => 125000,
-            'credit' => 0,
+            'amount' => 125000,
         ])
             ->assertRedirect(route('transactions.index', [], false))
             ->assertHeader('Location', route('transactions.index', [], false))
@@ -65,13 +65,12 @@ class TransactionCrudTest extends TestCase
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => 999,
             'description' => 'Unknown account transaction',
-            'debit' => 125000,
-            'credit' => 0,
+            'amount' => 125000,
         ])
             ->assertSessionHasErrors('chart_of_account_id');
     }
 
-    public function test_transaction_requires_exactly_one_amount_side(): void
+    public function test_transaction_requires_positive_amount(): void
     {
         $account = $this->createAccount('602', 'Bensin');
 
@@ -81,10 +80,9 @@ class TransactionCrudTest extends TestCase
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => $account->id,
             'description' => 'Fuel refill',
-            'debit' => 100000,
-            'credit' => 100000,
+            'amount' => 0,
         ])
-            ->assertSessionHasErrors('debit');
+            ->assertSessionHasErrors('amount');
 
         $this->withSession(['_token' => 'test-token'])->post(route('transactions.store'), [
             '_token' => 'test-token',
@@ -92,10 +90,30 @@ class TransactionCrudTest extends TestCase
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => $account->id,
             'description' => 'Fuel refill',
-            'debit' => 0,
-            'credit' => 0,
+            'amount' => '',
         ])
-            ->assertSessionHasErrors('debit');
+            ->assertSessionHasErrors('amount');
+    }
+
+    public function test_transaction_with_income_account_stores_amount_as_credit(): void
+    {
+        $account = $this->createAccount('401', 'Gaji Karyawan');
+
+        $this->withSession(['_token' => 'test-token'])->post(route('transactions.store'), [
+            '_token' => 'test-token',
+            'idempotency_key' => '8f08c405-eb9c-427f-968d-a8c144445df5',
+            'transaction_date' => '2026-06-10',
+            'chart_of_account_id' => $account->id,
+            'description' => 'Monthly salary',
+            'amount' => 7500000,
+        ])
+            ->assertRedirect(route('transactions.index', [], false));
+
+        $this->assertDatabaseHas('transactions', [
+            'idempotency_key' => '8f08c405-eb9c-427f-968d-a8c144445df5',
+            'debit' => 0,
+            'credit' => 7500000,
+        ]);
     }
 
     public function test_transaction_create_requires_unique_idempotency_key(): void
@@ -116,8 +134,7 @@ class TransactionCrudTest extends TestCase
             'transaction_date' => '2026-06-10',
             'chart_of_account_id' => $account->id,
             'description' => 'Duplicate subscription',
-            'debit' => 400000,
-            'credit' => 0,
+            'amount' => 400000,
         ])
             ->assertSessionHasErrors('idempotency_key');
 
@@ -148,6 +165,8 @@ class TransactionCrudTest extends TestCase
             ->assertSee('9e75ae56-3480-4cd2-852f-f7b60bd41d8e')
             ->assertSee('401 - Gaji Karyawan')
             ->assertSee('604 - Makan Siang')
+            ->assertSee('name="amount"', false)
+            ->assertSee('value="7500000"', false)
             ->assertSee('value="' . $salary->id . '"', false)
             ->assertSee('value="' . $meal->id . '"', false);
     }
@@ -171,8 +190,7 @@ class TransactionCrudTest extends TestCase
             'transaction_date' => '2026-06-12',
             'chart_of_account_id' => $meal->id,
             'description' => 'Team lunch',
-            'debit' => 210000,
-            'credit' => 0,
+            'amount' => 210000,
         ])
             ->assertRedirect(route('transactions.index', [], false))
             ->assertHeader('Location', route('transactions.index', [], false))
@@ -216,8 +234,7 @@ class TransactionCrudTest extends TestCase
             'transaction_date' => '2026-06-12',
             'chart_of_account_id' => $meal->id,
             'description' => 'Team lunch',
-            'debit' => 210000,
-            'credit' => 0,
+            'amount' => 210000,
         ])
             ->assertSessionHasErrors('idempotency_key');
 
@@ -256,6 +273,9 @@ class TransactionCrudTest extends TestCase
         return ChartOfAccount::query()->create([
             'code' => $code,
             'category_id' => $category->id,
+            'account_type' => str_starts_with($code, '4')
+                ? ChartOfAccount::ACCOUNT_TYPE_INCOME
+                : ChartOfAccount::ACCOUNT_TYPE_EXPENSE,
             'name' => $name,
         ]);
     }

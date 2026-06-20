@@ -33,6 +33,11 @@ class SaveChartOfAccountRequest extends FormRequest
                 'integer',
                 Rule::exists('chart_of_account_categories', 'id'),
             ],
+            'account_type' => [
+                'required',
+                'string',
+                Rule::in(ChartOfAccount::ACCOUNT_TYPES),
+            ],
             'name' => [
                 'required',
                 'string',

@@ -19,11 +19,12 @@ class TransactionFactory extends Factory
      */
     public function definition(): array
     {
-        $isDebit = $this->faker->boolean(70);
+        $account = $this->chartOfAccount();
+        $isIncome = $account->account_type === ChartOfAccount::ACCOUNT_TYPE_INCOME;
         $amount = $this->faker->numberBetween(10, 2500) * 1000;
 
         return [
-            'chart_of_account_id' => $this->chartOfAccountId(),
+            'chart_of_account_id' => $account->id,
             'transaction_date' => $this->faker->dateTimeBetween('-120 months', 'now')->format('Y-m-d'),
             'description' => $this->faker->randomElement([
                 'Monthly payroll receipt',
@@ -37,29 +38,30 @@ class TransactionFactory extends Factory
                 'Trading profit withdrawal',
                 'Public transport fare',
             ]),
-            'debit' => $isDebit ? $amount : 0,
-            'credit' => $isDebit ? 0 : $amount,
+            'debit' => $isIncome ? 0 : $amount,
+            'credit' => $isIncome ? $amount : 0,
         ];
     }
 
-    private function chartOfAccountId(): int
+    private function chartOfAccount(): ChartOfAccount
     {
-        $existingAccountId = ChartOfAccount::query()
+        $existingAccount = ChartOfAccount::query()
             ->inRandomOrder()
-            ->value('id');
+            ->first(['id', 'account_type']);
 
-        if ($existingAccountId !== null) {
-            return (int) $existingAccountId;
+        if ($existingAccount instanceof ChartOfAccount) {
+            return $existingAccount;
         }
 
         $category = ChartOfAccountCategory::query()->firstOrCreate([
             'name' => 'Other Income',
         ]);
 
-        return (int) ChartOfAccount::query()->create([
+        return ChartOfAccount::query()->create([
             'code' => (string) $this->faker->unique()->numberBetween(700, 999),
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_INCOME,
             'name' => 'Seeded Account',
-        ])->id;
+        ]);
     }
 }

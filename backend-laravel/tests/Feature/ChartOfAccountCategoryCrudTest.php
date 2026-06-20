@@ -105,6 +105,7 @@ class ChartOfAccountCategoryCrudTest extends TestCase
         ChartOfAccount::query()->create([
             'code' => '5001',
             'category_id' => $category->id,
+            'account_type' => ChartOfAccount::ACCOUNT_TYPE_EXPENSE,
             'name' => 'School Fee',
         ]);
 
