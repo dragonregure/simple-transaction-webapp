@@ -9,6 +9,21 @@
     background: var(--stw-brand-color);
 }
 
+.sidebar-lifely-icon {
+    align-items: center;
+    display: inline-flex;
+    height: 1.25rem;
+    justify-content: center;
+    width: 1.25rem;
+}
+
+.sidebar-lifely-icon img {
+    display: block;
+    height: 1rem;
+    object-fit: contain;
+    width: 1rem;
+}
+
 [data-yajra-data-table].is-loading .card-body {
     opacity: 0.55;
     pointer-events: none;
