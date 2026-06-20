@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Contracts\ChartOfAccountRepositoryInterface;
 use App\Contracts\ChartOfAccountCategoryRepositoryInterface;
+use App\Repositories\ChartOfAccountRepository;
 use App\Repositories\ChartOfAccountCategoryRepository;
 use Illuminate\Support\ServiceProvider;
 
@@ -13,6 +15,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(
+            ChartOfAccountRepositoryInterface::class,
+            ChartOfAccountRepository::class
+        );
+
         $this->app->bind(
             ChartOfAccountCategoryRepositoryInterface::class,
             ChartOfAccountCategoryRepository::class

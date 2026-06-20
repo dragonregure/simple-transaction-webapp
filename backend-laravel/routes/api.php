@@ -1,9 +1,15 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ChartOfAccountController;
 use App\Http\Controllers\Api\V1\ChartOfAccountCategoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->name('api.v1.')->group(function (): void {
+    Route::get('/chart-of-accounts', [ChartOfAccountController::class, 'index'])
+        ->name('chart-of-accounts.index');
+    Route::delete('/chart-of-accounts/{chartOfAccount}', [ChartOfAccountController::class, 'destroy'])
+        ->name('chart-of-accounts.destroy');
+
     Route::get('/chart-of-account-categories', [ChartOfAccountCategoryController::class, 'index'])
         ->name('chart-of-account-categories.index');
     Route::delete('/chart-of-account-categories/{chartOfAccountCategory}', [ChartOfAccountCategoryController::class, 'destroy'])

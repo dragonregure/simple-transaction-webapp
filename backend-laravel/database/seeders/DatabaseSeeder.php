@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(ChartOfAccountCategorySeeder::class);
+        $this->call(ChartOfAccountSeeder::class);
 
         // User::factory(10)->create();
 
