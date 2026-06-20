@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
-@section('title', 'Chart of Account Categories')
-@section('page-title', 'Chart of Account Categories')
+@section('title', 'Master Chart of Account Categories')
+@section('page-title', 'Master Chart of Account Categories')
 
 @section('content')
     @if (session('status'))

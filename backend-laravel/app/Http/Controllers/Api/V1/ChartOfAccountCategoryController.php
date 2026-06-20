@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Contracts\ChartOfAccountCategoryRepositoryInterface;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SelectOptionsRequest;
 use App\Models\ChartOfAccountCategory;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class ChartOfAccountCategoryController extends Controller
@@ -21,19 +21,12 @@ class ChartOfAccountCategoryController extends Controller
         return $this->categories->dataTable()->toJson();
     }
 
-    public function selectOptions(Request $request): JsonResponse
+    public function selectOptions(SelectOptionsRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'term' => ['nullable', 'string', 'max:255'],
-            'q' => ['nullable', 'string', 'max:255'],
-            'page' => ['nullable', 'integer', 'min:1'],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:50'],
-        ]);
-
         return response()->json($this->categories->selectOptions(
-            (string) ($validated['term'] ?? $validated['q'] ?? ''),
-            (int) ($validated['page'] ?? 1),
-            (int) ($validated['per_page'] ?? 20)
+            $request->searchTerm(),
+            $request->page(),
+            $request->perPage()
         ));
     }
 

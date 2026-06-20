@@ -81,7 +81,7 @@ class TransactionController extends Controller
             return $this->redirectBackWithSaveError();
         }
 
-        return $this->redirectToIndexWithStatus('Transaction created.');
+        return $this->redirectToRouteWithStatus('transactions.index', 'Transaction created.');
     }
 
     public function edit(Transaction $transaction): View
@@ -112,15 +112,7 @@ class TransactionController extends Controller
             return $this->redirectBackWithSaveError();
         }
 
-        return $this->redirectToIndexWithStatus('Transaction updated.');
-    }
-
-    private function redirectToIndexWithStatus(string $message): Response
-    {
-        session()->flash('status', $message);
-
-        return response('', 302)
-            ->header('Location', route('transactions.index', [], false));
+        return $this->redirectToRouteWithStatus('transactions.index', 'Transaction updated.');
     }
 
     private function redirectBackWithSaveError(): RedirectResponse

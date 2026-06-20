@@ -53,7 +53,10 @@ class ChartOfAccountCategoryController extends Controller
     {
         ChartOfAccountCategory::query()->create($request->validated());
 
-        return $this->redirectToIndexWithStatus('Chart of account category created.');
+        return $this->redirectToRouteWithStatus(
+            'chart-of-account-categories.index',
+            'Chart of account category created.'
+        );
     }
 
     public function edit(ChartOfAccountCategory $chartOfAccountCategory): View
@@ -73,14 +76,9 @@ class ChartOfAccountCategoryController extends Controller
     ): Response {
         $chartOfAccountCategory->update($request->validated());
 
-        return $this->redirectToIndexWithStatus('Chart of account category updated.');
-    }
-
-    private function redirectToIndexWithStatus(string $message): Response
-    {
-        session()->flash('status', $message);
-
-        return response('', 302)
-            ->header('Location', route('chart-of-account-categories.index', [], false));
+        return $this->redirectToRouteWithStatus(
+            'chart-of-account-categories.index',
+            'Chart of account category updated.'
+        );
     }
 }
