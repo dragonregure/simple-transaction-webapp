@@ -2,13 +2,9 @@
 
 namespace App\Contracts;
 
-use App\Models\ChartOfAccountCategory;
-use Illuminate\Database\Eloquent\Builder;
+use Yajra\DataTables\EloquentDataTable;
 
 interface ChartOfAccountCategoryRepositoryInterface
 {
-    /**
-     * @return Builder<ChartOfAccountCategory>
-     */
-    public function tableQuery(): Builder;
+    public function dataTable(): EloquentDataTable;
 }

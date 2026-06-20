@@ -33,16 +33,6 @@ class ChartOfAccountCategoryController extends Controller
             ],
             'dataEndpoint' => route('api.v1.chart-of-account-categories.index', [], false),
             'createEndpoint' => route('chart-of-account-categories.create', [], false),
-            'editEndpointTemplate' => route(
-                'chart-of-account-categories.edit',
-                ['chartOfAccountCategory' => '__ID__'],
-                false
-            ),
-            'deleteEndpointTemplate' => route(
-                'api.v1.chart-of-account-categories.destroy',
-                ['chartOfAccountCategory' => '__ID__'],
-                false
-            ),
             'perPageOptions' => [5, 10, 15, 25, 50],
             'defaultPerPage' => 10,
         ]);

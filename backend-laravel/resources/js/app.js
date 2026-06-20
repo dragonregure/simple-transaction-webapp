@@ -47,7 +47,6 @@ const bindYajraDataTable = (dataTable) => {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const status = dataTable.querySelector('[data-yajra-table-status]');
     const errorMessage = dataTable.dataset.errorMessage || 'Unable to load records.';
-    const rowLabelKey = dataTable.dataset.rowLabelKey || 'name';
     const initialSort = dataTable.dataset.initialSort;
     const initialDirection = dataTable.dataset.initialDirection || 'asc';
     const pageLength = Number(dataTable.dataset.pageLength || 10);
@@ -71,7 +70,7 @@ const bindYajraDataTable = (dataTable) => {
                 setStatus(errorMessage);
             },
         },
-        columns: columns.map((column) => dataTableColumn(column, dataTable, rowLabelKey)),
+        columns: columns.map(dataTableColumn),
         lengthMenu,
         order: initialOrder(columns, initialSort, initialDirection),
         pageLength,
@@ -90,13 +89,12 @@ const bindYajraDataTable = (dataTable) => {
     });
 };
 
-const dataTableColumn = (column, dataTable, rowLabelKey) => ({
+const dataTableColumn = (column) => ({
     className: column.class || '',
-    data: column.type === 'actions' ? null : column.key,
+    data: column.key,
     name: column.name || column.key,
     orderable: column.orderable !== false && column.type !== 'actions',
     searchable: column.searchable !== false && column.type !== 'actions',
-    render: (value, type, row) => renderCell(value, type, row, column, dataTable, rowLabelKey),
 });
 
 const initialOrder = (columns, initialSort, initialDirection) => {
@@ -107,47 +105,6 @@ const initialOrder = (columns, initialSort, initialDirection) => {
     }
 
     return [[columnIndex, initialDirection === 'desc' ? 'desc' : 'asc']];
-};
-
-const renderCell = (value, type, row, column, dataTable, rowLabelKey) => {
-    if (column.type === 'actions') {
-        return renderActions(row, dataTable, rowLabelKey);
-    }
-
-    if (type !== 'display') {
-        return value ?? '';
-    }
-
-    if (column.type === 'datetime') {
-        return escapeHtml(formatDate(value));
-    }
-
-    return escapeHtml(value);
-};
-
-const renderActions = (row, dataTable, rowLabelKey) => {
-    const rowLabel = escapeHtml(row[rowLabelKey] || 'record');
-    const editEndpoint = escapeHtml(endpointFromTemplate(dataTable.dataset.editEndpointTemplate, row.id));
-    const deleteEndpoint = escapeHtml(endpointFromTemplate(dataTable.dataset.deleteEndpointTemplate, row.id));
-
-    return `
-        <div class="btn-group btn-group-sm" role="group" aria-label="Actions for ${rowLabel}">
-            <a href="${editEndpoint}" class="btn btn-outline-primary" title="Update ${rowLabel}">
-                <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                <span class="visually-hidden">Update ${rowLabel}</span>
-            </a>
-            <button
-                type="button"
-                class="btn btn-outline-danger"
-                title="Delete ${rowLabel}"
-                data-yajra-table-delete="${deleteEndpoint}"
-                data-delete-row-label="${rowLabel}"
-            >
-                <i class="bi bi-trash" aria-hidden="true"></i>
-                <span class="visually-hidden">Delete ${rowLabel}</span>
-            </button>
-        </div>
-    `;
 };
 
 const handleDeleteClick = async (event, tableApi, dataTable, csrfToken, setStatus) => {
@@ -202,32 +159,3 @@ const deleteErrorMessage = async (response) => {
 
     return 'Unable to delete record.';
 };
-
-const endpointFromTemplate = (template, id) => {
-    if (! template || ! id) {
-        return '';
-    }
-
-    return template.replace('__ID__', encodeURIComponent(id));
-};
-
-const formatDate = (value) => {
-    if (! value) {
-        return '-';
-    }
-
-    return new Intl.DateTimeFormat(undefined, {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(new Date(value));
-};
-
-const escapeHtml = (value) => String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');

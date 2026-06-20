@@ -22,8 +22,8 @@ class ChartOfAccountCategoryIndexTest extends TestCase
             ->assertSee('class="table table-hover align-middle w-100 mb-0"', false)
             ->assertSee(route('api.v1.chart-of-account-categories.index', [], false))
             ->assertSee(route('chart-of-account-categories.create', [], false))
-            ->assertSee('data-edit-endpoint-template', false)
-            ->assertSee('data-delete-endpoint-template', false)
+            ->assertDontSee('data-edit-endpoint-template', false)
+            ->assertDontSee('data-delete-endpoint-template', false)
             ->assertSee('data-page-length-options', false);
     }
 
@@ -40,6 +40,7 @@ class ChartOfAccountCategoryIndexTest extends TestCase
             ->assertJsonPath('recordsTotal', 5)
             ->assertJsonPath('recordsFiltered', 5)
             ->assertJsonFragment(['name' => 'Salary'])
+            ->assertJsonFragment(['actions' => $this->actionsForCategory('Salary')])
             ->assertJsonFragment(['name' => 'Other Income'])
             ->assertJsonFragment(['name' => 'Family Expense'])
             ->assertJsonFragment(['name' => 'Transport Expense'])
@@ -144,5 +145,16 @@ class ChartOfAccountCategoryIndexTest extends TestCase
                 ],
             ],
         ], $overrides);
+    }
+
+    private function actionsForCategory(string $name): string
+    {
+        $category = ChartOfAccountCategory::query()
+            ->where('name', $name)
+            ->firstOrFail();
+
+        return view('chart-of-account-categories.partials.table-actions', [
+            'category' => $category,
+        ])->render();
     }
 }

@@ -14,14 +14,11 @@
         class="card"
         data-yajra-data-table
         data-endpoint="{{ $dataEndpoint }}"
-        data-edit-endpoint-template="{{ $editEndpointTemplate }}"
-        data-delete-endpoint-template="{{ $deleteEndpointTemplate }}"
         data-initial-sort="name"
         data-initial-direction="asc"
         data-page-length="{{ $defaultPerPage }}"
         data-page-length-options='@json($perPageOptions)'
         data-columns='@json($columns)'
-        data-row-label-key="name"
         data-error-message="Unable to load chart of account categories."
     >
         <div class="card-header">

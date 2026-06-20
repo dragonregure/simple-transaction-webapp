@@ -8,7 +8,6 @@ use App\Models\ChartOfAccountCategory;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Yajra\DataTables\Facades\DataTables;
 
 class ChartOfAccountCategoryController extends Controller
 {
@@ -18,18 +17,7 @@ class ChartOfAccountCategoryController extends Controller
 
     public function index(): JsonResponse
     {
-        return DataTables::eloquent($this->categories->tableQuery())
-            ->only(['id', 'name', 'created_at', 'updated_at'])
-            ->whitelist(['id', 'name', 'created_at', 'updated_at'])
-            ->editColumn(
-                'created_at',
-                fn (ChartOfAccountCategory $category): ?string => $category->created_at?->toISOString()
-            )
-            ->editColumn(
-                'updated_at',
-                fn (ChartOfAccountCategory $category): ?string => $category->updated_at?->toISOString()
-            )
-            ->toJson();
+        return $this->categories->dataTable()->toJson();
     }
 
     public function destroy(ChartOfAccountCategory $chartOfAccountCategory): JsonResponse|Response
