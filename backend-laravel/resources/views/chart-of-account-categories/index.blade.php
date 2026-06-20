@@ -25,7 +25,6 @@
             <div class="d-flex justify-content-end">
                 <a href="{{ $createEndpoint }}" class="btn btn-primary">
                     <i class="bi bi-plus-lg" aria-hidden="true"></i>
-                    <span>Create</span>
                 </a>
             </div>
         </div>
