@@ -175,7 +175,7 @@ function toggleOtherLinksMenu() {
           <p class="truncate text-xs text-muted">Laravel API with Vue client</p>
         </div>
         <a class="focus-ring rounded-md border border-line px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" :href="BLADE_APP_URL" target="_blank" rel="noreferrer">
-          Blade app
+          Blade Version
         </a>
       </header>
 
