@@ -1,21 +1,42 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, type Component } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
-import { BarChart3, ChevronDown, FolderTree, Menu, PanelLeftClose, PanelLeftOpen, ReceiptText, Tags, X } from "@lucide/vue";
+import { BarChart3, ChevronDown, FolderTree, GitFork, Link2, Menu, PanelLeftClose, PanelLeftOpen, ReceiptText, Tags, X } from "@lucide/vue";
+
+type NavigationItem = {
+  label: string;
+  href: string;
+  icon: Component;
+};
+
+type ExternalNavigationItem = {
+  label: string;
+  href: string;
+  icon?: Component;
+  imageSrc?: string;
+  imageAlt?: string;
+};
 
 const route = useRoute();
 const sidebarOpen = ref(false);
 const minimized = ref(false);
 const masterExpanded = ref(route.path.startsWith("/master"));
+const otherLinksExpanded = ref(true);
 
-const navigation = [
+const navigation: NavigationItem[] = [
   { label: "Transactions", href: "/transactions", icon: ReceiptText },
   { label: "Reports", href: "/reports", icon: BarChart3 },
 ];
 
-const masterNavigation = [
+const masterNavigation: NavigationItem[] = [
   { label: "COA", href: "/master/chart-of-accounts", icon: FolderTree },
   { label: "COA Categories", href: "/master/chart-of-account-categories", icon: Tags },
+];
+
+const otherLinks: ExternalNavigationItem[] = [
+  { label: "Repository", href: "https://github.com/dragonregure/simple-transaction-webapp", icon: GitFork },
+  { label: "Get Lifely", href: "https://getlifely.vercel.app/", imageSrc: "/images/lifely-icon.png", imageAlt: "" },
+  { label: "Lifely Repository", href: "https://github.com/dragonregure/lifely", icon: GitFork },
 ];
 
 const isMasterActive = computed(() => route.path.startsWith("/master"));
@@ -31,6 +52,10 @@ watch(
 
 function toggleMasterMenu() {
   masterExpanded.value = !masterExpanded.value;
+}
+
+function toggleOtherLinksMenu() {
+  otherLinksExpanded.value = !otherLinksExpanded.value;
 }
 </script>
 
@@ -103,9 +128,38 @@ function toggleMasterMenu() {
           </div>
         </nav>
 
-        <div v-if="!minimized" class="mt-auto rounded-md border border-line bg-slate-50 p-3">
-          <p class="text-xs font-semibold uppercase text-slate-500">Mode</p>
-          <p class="mt-1 text-sm font-semibold text-ink">Vue SPA</p>
+        <div class="mt-auto grid gap-1">
+          <button
+            class="focus-ring flex h-9 w-full items-center gap-2 rounded-md px-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+            :class="{ 'justify-center px-0': minimized }"
+            type="button"
+            :title="minimized ? 'Other Links' : undefined"
+            :aria-expanded="otherLinksExpanded"
+            aria-controls="desktop-other-links-menu"
+            @click="toggleOtherLinksMenu"
+          >
+            <ChevronDown class="h-3.5 w-3.5 transition-transform" :class="{ '-rotate-90': !otherLinksExpanded }" />
+            <Link2 class="h-3.5 w-3.5 shrink-0" />
+            <span v-if="!minimized">Other Links</span>
+          </button>
+          <div v-if="otherLinksExpanded" id="desktop-other-links-menu" class="grid gap-1">
+            <a
+              v-for="item in otherLinks"
+              :key="item.href"
+              :href="item.href"
+              class="focus-ring flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-950"
+              :class="{ 'justify-center px-0': minimized }"
+              :title="minimized ? item.label : undefined"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <component v-if="item.icon" :is="item.icon" class="h-4 w-4 shrink-0" />
+              <span v-else class="grid h-4 w-4 shrink-0 place-items-center overflow-hidden rounded-sm">
+                <img :src="item.imageSrc" :alt="item.imageAlt" class="h-4 w-4 object-contain" />
+              </span>
+              <span v-if="!minimized" class="truncate">{{ item.label }}</span>
+            </a>
+          </div>
         </div>
       </div>
     </aside>
@@ -173,6 +227,34 @@ function toggleMasterMenu() {
               <component :is="item.icon" class="h-4 w-4" />
               {{ item.label }}
             </RouterLink>
+          </div>
+          <button
+            class="focus-ring mt-2 flex h-9 items-center gap-2 rounded-md px-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+            type="button"
+            :aria-expanded="otherLinksExpanded"
+            aria-controls="mobile-other-links-menu"
+            @click="toggleOtherLinksMenu"
+          >
+            <ChevronDown class="h-3.5 w-3.5 transition-transform" :class="{ '-rotate-90': !otherLinksExpanded }" />
+            <Link2 class="h-3.5 w-3.5" />
+            <span>Other Links</span>
+          </button>
+          <div v-if="otherLinksExpanded" id="mobile-other-links-menu" class="grid gap-1">
+            <a
+              v-for="item in otherLinks"
+              :key="item.href"
+              :href="item.href"
+              class="focus-ring flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              target="_blank"
+              rel="noopener noreferrer"
+              @click="sidebarOpen = false"
+            >
+              <component v-if="item.icon" :is="item.icon" class="h-4 w-4" />
+              <span v-else class="grid h-4 w-4 place-items-center overflow-hidden rounded-sm">
+                <img :src="item.imageSrc" :alt="item.imageAlt" class="h-4 w-4 object-contain" />
+              </span>
+              {{ item.label }}
+            </a>
           </div>
         </nav>
       </aside>
