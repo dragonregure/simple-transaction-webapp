@@ -7,5 +7,17 @@
                 </a>
             </li>
         </ul>
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+                <a
+                    href="{{ config('app.frontend_url') }}"
+                    class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <span>SPA Version</span>
+                </a>
+            </li>
+        </ul>
     </div>
 </nav>

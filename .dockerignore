@@ -6,5 +6,7 @@ backend-laravel/node_modules
 backend-laravel/.env
 backend-laravel/storage/logs/*.log
 backend-laravel/.phpunit.result.cache
+frontend/node_modules
+frontend/dist
 
 docker-compose.override.yml
