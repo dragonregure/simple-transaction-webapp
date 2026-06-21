@@ -36,6 +36,8 @@ class ExampleTest extends TestCase
                 ->assertOk()
                 ->assertSee($title)
                 ->assertSee('app-sidebar', false)
+                ->assertSee('SPA Version')
+                ->assertSee('href="' . config('app.frontend_url') . '"', false)
                 ->assertSee('href="/vendor/adminlte/css/adminlte.min.css"', false)
                 ->assertSee('href="/vendor/bootstrap-icons/font/bootstrap-icons.min.css"', false);
         }
