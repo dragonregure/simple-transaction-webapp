@@ -29,6 +29,8 @@ This project is set up with repeatable local and CI checks:
 - Automatic PHPCS fixing available through `composer lint:php:fix`.
 - Composer manifest validation in CI with `composer validate --strict`.
 - Blade/Vite production asset build through `npm run build`.
+- Vue SPA ESLint checks through `npm run lint`.
+- Vue SPA type checking and production build through `npm run build`.
 - Repository contracts bound to concrete repositories in Laravel's service container.
 - Form Request validation for write flows.
 - Database transactions around transaction create/update workflows.
@@ -117,9 +119,10 @@ composer lint:php:fix
 npm run build
 ```
 
-Run the Vue SPA build from `frontend`:
+Run Vue SPA checks from `frontend`:
 
 ```bash
+npm run lint
 npm run build
 ```
 
@@ -131,7 +134,9 @@ composer setup
 
 ## Continuous Integration
 
-GitHub Actions runs the Simple Transaction CI workflow after pushes and pull requests to `main` and `development`. The workflow:
+GitHub Actions runs the Simple Transaction CI workflow after pushes and pull requests to `main` and `development`. The workflow has separate jobs for the Laravel backend/Blade assets and the Vue SPA.
+
+The Laravel job:
 
 - validates `composer.json`;
 - installs Composer dependencies;
@@ -141,6 +146,12 @@ GitHub Actions runs the Simple Transaction CI workflow after pushes and pull req
 - runs PHP_CodeSniffer;
 - installs npm dependencies with `npm ci`;
 - builds Blade/Vite assets.
+
+The Vue SPA job:
+
+- installs npm dependencies with `npm ci`;
+- runs frontend ESLint;
+- builds the Vue SPA.
 
 CI uses SQLite in memory for fast backend tests.
 
