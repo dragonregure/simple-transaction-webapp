@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { BarChart3, ChevronDown, FolderTree, Menu, PanelLeftClose, PanelLeftOpen, ReceiptText, Tags, X } from "@lucide/vue";
 
 const route = useRoute();
 const sidebarOpen = ref(false);
 const minimized = ref(false);
+const masterExpanded = ref(route.path.startsWith("/master"));
 
 const navigation = [
   { label: "Transactions", href: "/transactions", icon: ReceiptText },
@@ -18,6 +19,19 @@ const masterNavigation = [
 ];
 
 const isMasterActive = computed(() => route.path.startsWith("/master"));
+
+watch(
+  () => route.path,
+  (path) => {
+    if (path.startsWith("/master")) {
+      masterExpanded.value = true;
+    }
+  },
+);
+
+function toggleMasterMenu() {
+  masterExpanded.value = !masterExpanded.value;
+}
 </script>
 
 <template>
@@ -27,7 +41,7 @@ const isMasterActive = computed(() => route.path.startsWith("/master"));
       :class="minimized ? 'w-20' : 'w-64'"
     >
       <div class="flex h-full flex-col gap-5 p-4" :class="minimized && 'px-3'">
-        <div class="flex items-center gap-3" :class="minimized ? 'justify-center' : 'justify-between'">
+        <div class="flex items-center gap-3" :class="minimized ? 'flex-col justify-center' : 'justify-between'">
           <RouterLink to="/transactions" class="flex min-w-0 items-center gap-3">
             <div class="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-cyan-700 text-sm font-bold text-white">ST</div>
             <div v-if="!minimized" class="min-w-0">
@@ -61,24 +75,31 @@ const isMasterActive = computed(() => route.path.startsWith("/master"));
           </RouterLink>
 
           <div class="mt-2">
-            <div
-              class="flex h-9 items-center gap-2 px-3 text-xs font-semibold uppercase tracking-wide text-slate-400"
-              :class="minimized && 'justify-center px-0'"
+            <button
+              class="focus-ring flex h-9 w-full items-center gap-2 rounded-md px-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+              :class="{ 'justify-center px-0': minimized, 'text-cyan-700': isMasterActive }"
+              type="button"
+              :title="minimized ? 'Master Data' : undefined"
+              :aria-expanded="masterExpanded"
+              aria-controls="desktop-master-data-menu"
+              @click="toggleMasterMenu"
             >
-              <ChevronDown class="h-3.5 w-3.5" :class="{ 'text-cyan-700': isMasterActive }" />
+              <ChevronDown class="h-3.5 w-3.5 transition-transform" :class="{ '-rotate-90': !masterExpanded }" />
               <span v-if="!minimized">Master Data</span>
+            </button>
+            <div v-if="masterExpanded" id="desktop-master-data-menu" class="grid gap-1">
+              <RouterLink
+                v-for="item in masterNavigation"
+                :key="item.href"
+                :to="item.href"
+                class="focus-ring flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-slate-600 hover:bg-emerald-50 hover:text-emerald-900"
+                :class="{ 'bg-emerald-100 text-emerald-950': route.path === item.href, 'justify-center px-0': minimized }"
+                :title="minimized ? item.label : undefined"
+              >
+                <component :is="item.icon" class="h-4 w-4 shrink-0" />
+                <span v-if="!minimized" class="truncate">{{ item.label }}</span>
+              </RouterLink>
             </div>
-            <RouterLink
-              v-for="item in masterNavigation"
-              :key="item.href"
-              :to="item.href"
-              class="focus-ring flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-slate-600 hover:bg-emerald-50 hover:text-emerald-900"
-              :class="{ 'bg-emerald-100 text-emerald-950': route.path === item.href, 'justify-center px-0': minimized }"
-              :title="minimized ? item.label : undefined"
-            >
-              <component :is="item.icon" class="h-4 w-4 shrink-0" />
-              <span v-if="!minimized" class="truncate">{{ item.label }}</span>
-            </RouterLink>
           </div>
         </nav>
 
@@ -121,7 +142,7 @@ const isMasterActive = computed(() => route.path.startsWith("/master"));
         </div>
         <nav class="grid gap-1">
           <RouterLink
-            v-for="item in [...navigation, ...masterNavigation]"
+            v-for="item in navigation"
             :key="item.href"
             :to="item.href"
             class="focus-ring flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
@@ -130,6 +151,29 @@ const isMasterActive = computed(() => route.path.startsWith("/master"));
             <component :is="item.icon" class="h-4 w-4" />
             {{ item.label }}
           </RouterLink>
+          <button
+            class="focus-ring mt-2 flex h-9 items-center gap-2 rounded-md px-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+            :class="{ 'text-cyan-700': isMasterActive }"
+            type="button"
+            :aria-expanded="masterExpanded"
+            aria-controls="mobile-master-data-menu"
+            @click="toggleMasterMenu"
+          >
+            <ChevronDown class="h-3.5 w-3.5 transition-transform" :class="{ '-rotate-90': !masterExpanded }" />
+            <span>Master Data</span>
+          </button>
+          <div v-if="masterExpanded" id="mobile-master-data-menu" class="grid gap-1">
+            <RouterLink
+              v-for="item in masterNavigation"
+              :key="item.href"
+              :to="item.href"
+              class="focus-ring flex h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              @click="sidebarOpen = false"
+            >
+              <component :is="item.icon" class="h-4 w-4" />
+              {{ item.label }}
+            </RouterLink>
+          </div>
         </nav>
       </aside>
     </div>

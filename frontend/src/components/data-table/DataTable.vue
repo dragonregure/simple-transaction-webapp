@@ -114,7 +114,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="grid gap-3">
-    <DataTableToolbar v-model:search="search" :disabled="loading">
+    <DataTableToolbar v-model:search="search">
       <template v-if="$slots.toolbarActions" #actions>
         <slot name="toolbarActions" :state="queryState" />
       </template>

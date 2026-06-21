@@ -3,7 +3,6 @@ import { Search } from "@lucide/vue";
 
 defineProps<{
   search: string;
-  disabled?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -20,7 +19,6 @@ const emit = defineEmits<{
         type="search"
         placeholder="Search"
         :value="search"
-        :disabled="disabled"
         @input="emit('update:search', ($event.target as HTMLInputElement).value)"
       />
     </label>
