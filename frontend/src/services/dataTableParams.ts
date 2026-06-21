@@ -1,6 +1,6 @@
-import type { DataTableColumn, DataTableQueryState } from "@/types";
+import type { DataTableColumn, DataTableQueryState, DataTableRow } from "@/types";
 
-export function toDataTablesQuery<T>(columns: DataTableColumn<T>[], state: DataTableQueryState): string {
+export function toDataTablesQuery<T extends DataTableRow>(columns: DataTableColumn<T>[], state: DataTableQueryState): string {
   const query = new URLSearchParams();
   const sortColumn = state.sort ? columns.findIndex((column) => column.id === state.sort?.columnId) : -1;
 

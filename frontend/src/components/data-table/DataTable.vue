@@ -1,15 +1,15 @@
-<script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+<script setup lang="ts" generic="T extends DataTableRow">
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from "vue";
 import DataTableContent from "@/components/data-table/DataTableContent.vue";
 import DataTablePagination from "@/components/data-table/DataTablePagination.vue";
 import DataTableToolbar from "@/components/data-table/DataTableToolbar.vue";
 import { isAbortError } from "@/services/httpClient";
-import type { DataTableColumn, DataTableQueryState, DataTableResult, DataTableSort } from "@/types";
+import type { DataTableColumn, DataTableQueryState, DataTableResult, DataTableRow, DataTableSort } from "@/types";
 
 const props = withDefaults(
   defineProps<{
-    columns: DataTableColumn<any>[];
-    fetchRows: (state: DataTableQueryState, context: { signal: AbortSignal }) => Promise<DataTableResult<any>>;
+    columns: DataTableColumn<T>[];
+    fetchRows: (state: DataTableQueryState, context: { signal: AbortSignal }) => Promise<DataTableResult<T>>;
     emptyMessage?: string;
     initialPageSize?: number;
     pageSizeOptions?: number[];
@@ -28,7 +28,12 @@ const emit = defineEmits<{
   error: [message: string];
 }>();
 
-const rows = ref<any[]>([]);
+defineSlots<{
+  toolbarActions?: (props: { state: DataTableQueryState }) => unknown;
+  actions?: (props: { row: T }) => unknown;
+}>();
+
+const rows = shallowRef<T[]>([]);
 const page = ref(1);
 const pageSize = ref(props.initialPageSize);
 const search = ref("");
@@ -69,7 +74,7 @@ async function loadRows() {
   }
 }
 
-function handleSort(column: DataTableColumn<any>) {
+function handleSort(column: DataTableColumn<T>) {
   if (column.sortable === false) return;
 
   if (sort.value?.columnId !== column.id) {

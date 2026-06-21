@@ -20,7 +20,7 @@ const columns: DataTableColumn<ChartOfAccount>[] = [
   { id: "code", label: "Code", name: "code" },
   { id: "name", label: "Name", name: "name" },
   { id: "account_type", label: "Type", name: "account_type", format: (row) => row.account_type_label ?? row.account_type },
-  { id: "category", label: "Category", name: "category.name", format: (row) => row.category?.name ?? String((row as any).category ?? "-") },
+  { id: "category", label: "Category", name: "category.name", format: (row) => categoryLabel(row) },
 ];
 
 const blankDraft = (): ChartOfAccountPayload => ({
@@ -39,6 +39,10 @@ const modalOpen = ref(false);
 const saving = ref(false);
 const error = ref("");
 
+function categoryLabel(account: ChartOfAccount, fallback = "-"): string {
+  return typeof account.category === "string" ? account.category : account.category?.name ?? fallback;
+}
+
 onMounted(async () => {
   accountTypes.value = (await getAccountTypes()).data;
 });
@@ -56,7 +60,7 @@ async function openEdit(row: ChartOfAccount) {
   const account = response.data;
 
   editingId.value = account.id;
-  selectedCategoryText.value = account.category?.name ?? "";
+  selectedCategoryText.value = categoryLabel(account, "");
   draft.value = {
     code: account.code,
     name: account.name,

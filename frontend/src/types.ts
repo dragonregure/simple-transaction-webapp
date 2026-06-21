@@ -1,3 +1,7 @@
+export type DataTableRow = {
+  id: string | number;
+};
+
 export type SortDirection = "asc" | "desc";
 
 export type DataTableSort = {
@@ -12,7 +16,7 @@ export type DataTableQueryState = {
   sort: DataTableSort | null;
 };
 
-export type DataTableColumn<T> = {
+export type DataTableColumn<T extends DataTableRow> = {
   id: string;
   label: string;
   name?: string;
@@ -22,7 +26,7 @@ export type DataTableColumn<T> = {
   format?: (row: T) => string;
 };
 
-export type DataTableResult<T> = {
+export type DataTableResult<T extends DataTableRow> = {
   data: T[];
   draw: number;
   recordsTotal: number;
@@ -80,7 +84,7 @@ export type ChartOfAccount = {
   category?: {
     id: number;
     name: string;
-  } | null;
+  } | string | null;
 };
 
 export type ChartOfAccountPayload = {

@@ -1,18 +1,36 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends DataTableRow">
 import { ArrowDown, ArrowUp, ChevronsUpDown, Loader2 } from "@lucide/vue";
-import type { DataTableColumn, DataTableSort } from "@/types";
+import type { DataTableColumn, DataTableRow, DataTableSort } from "@/types";
 
 defineProps<{
-  columns: DataTableColumn<any>[];
-  rows: any[];
+  columns: DataTableColumn<T>[];
+  rows: T[];
   sort: DataTableSort | null;
   loading?: boolean;
   emptyMessage: string;
 }>();
 
 const emit = defineEmits<{
-  sort: [column: DataTableColumn<any>];
+  sort: [column: DataTableColumn<T>];
 }>();
+
+defineSlots<{
+  actions?: (props: { row: T }) => unknown;
+}>();
+
+function formatCell(row: T, column: DataTableColumn<T>): string {
+  if (column.format) {
+    return column.format(row);
+  }
+
+  const value = (row as unknown as Record<string, unknown>)[column.id];
+
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+
+  return String(value);
+}
 </script>
 
 <template>
@@ -55,7 +73,7 @@ const emit = defineEmits<{
           <template v-else>
             <tr v-for="row in rows" :key="row.id" class="border-t border-line hover:bg-slate-50/70">
               <td v-for="column in columns" :key="column.id" class="px-4 py-3 align-middle text-slate-700" :class="column.className">
-                {{ column.format ? column.format(row) : row[column.id] ?? "-" }}
+                {{ formatCell(row, column) }}
               </td>
               <td v-if="$slots.actions" class="px-4 py-3 text-right">
                 <div class="inline-flex items-center justify-end gap-2">

@@ -2,6 +2,7 @@
 import { computed, ref, watch, type Component } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { BarChart3, ChevronDown, FolderTree, GitFork, Link2, Menu, PanelLeftClose, PanelLeftOpen, ReceiptText, Tags, X } from "@lucide/vue";
+import { BLADE_APP_URL } from "@/config/env";
 
 type NavigationItem = {
   label: string;
@@ -173,7 +174,7 @@ function toggleOtherLinksMenu() {
           <p class="truncate text-sm font-semibold text-ink">Simple Transaction Webapp</p>
           <p class="truncate text-xs text-muted">Laravel API with Vue client</p>
         </div>
-        <a class="focus-ring rounded-md border border-line px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" href="http://localhost:8000" target="_blank" rel="noreferrer">
+        <a class="focus-ring rounded-md border border-line px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50" :href="BLADE_APP_URL" target="_blank" rel="noreferrer">
           Blade app
         </a>
       </header>
